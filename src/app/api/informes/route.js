@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { getUsage } from "@/lib/usage";
+import { safeError } from "@/lib/apiError";
 
 export async function GET(req) {
   try {
@@ -23,5 +24,5 @@ export async function GET(req) {
       campana_enviados: T.filter(t => t.estado === "enviado").length,
       uso,
     });
-  } catch (e) { return Response.json({ error: String(e.message || e) }, { status: 500 }); }
+  } catch (e) { return Response.json({ error: safeError(e) }, { status: 500 }); }
 }

@@ -1,4 +1,5 @@
 import { loadTenantContext, generateReply } from "@/lib/responder";
+import { safeError } from "@/lib/apiError";
 
 export async function POST(req) {
   try {
@@ -8,6 +9,6 @@ export async function POST(req) {
     const res = await generateReply(ctx, message || "");
     return Response.json(res);
   } catch (e) {
-    return Response.json({ error: String(e.message || e) }, { status: 500 });
+    return Response.json({ error: safeError(e) }, { status: 500 });
   }
 }

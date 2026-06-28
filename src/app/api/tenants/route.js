@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { safeError } from "@/lib/apiError";
 
 export async function GET() {
   try {
@@ -31,6 +32,6 @@ export async function POST(req) {
     if (services.length) await sb.from("services").insert(services);
     return Response.json({ ok: true, tenant_id: tenant.id });
   } catch (e) {
-    return Response.json({ ok: false, error: String(e.message || e) }, { status: 500 });
+    return Response.json({ ok: false, error: safeError(e) }, { status: 500 });
   }
 }

@@ -28,7 +28,9 @@ Los 5 hallazgos Críticos fueron corregidos:
 
 **Acción requerida del usuario:** definir `APP_BASIC_AUTH_USER` y `APP_BASIC_AUTH_PASS` en `.env.local` y en Vercel. Si no se definen, el middleware no bloquea nada (fail-open intencional para no romper el entorno de desarrollo local existente).
 
-Los hallazgos Altos #9-#11, Medios y Bajos quedan pendientes de remediación.
+**Alto — #9 resuelto:** se creó `src/lib/apiError.js` (`safeError(e)`: loggea el error completo con `console.error` y devuelve un mensaje genérico) y se reemplazó el patrón `String(e.message || e)` en las 13 ocurrencias de las 9 rutas afectadas (`appointments`, `campaigns`, `conversations`, `usage`, `informes`, `chat`, `tenants`, `tenant-data`, `cron/recordatorios`). Ya no se exponen detalles de esquema/Postgres al cliente.
+
+Los hallazgos Altos #10-#11, Medios y Bajos quedan pendientes de remediación.
 
 ## Crítico
 
@@ -82,7 +84,7 @@ Descripción: `/api/tenants` GET devuelve la lista completa de negocios sin aute
 Riesgo/Impacto: en el estado actual (probablemente solo localhost/demo) es aceptable, pero el roadmap indica que el deploy a Vercel (`punto 10`) está pendiente; si se despliega antes de implementar auth, la aplicación entera queda abierta públicamente sin control de acceso.
 Remediación sugerida: bloquear el deploy público hasta completar el punto 2 del roadmap (Supabase Auth + tenant_id en JWT), o al menos proteger con un gate temporal (Vercel password protection / Basic Auth) durante la fase de pruebas.
 
-#### 9. Mensajes de error de Supabase expuestos directamente en las respuestas JSON
+#### 9. [RESUELTO] Mensajes de error de Supabase expuestos directamente en las respuestas JSON
 **Archivo:** múltiples — ejemplos: `src/app/api/appointments/route.js:15`, `src/app/api/campaigns/route.js:17,35,66`, `src/app/api/informes/route.js:26`, `src/app/api/tenants/route.js:34`, `src/app/api/usage/route.js:7,16`
 Descripción: el patrón `catch (e) { return Response.json({ error: String(e.message || e) }, ...) }` se repite en casi todas las rutas, devolviendo el mensaje crudo de error de Postgres/Supabase al cliente.
 Riesgo/Impacto: puede filtrar detalles de esquema (nombres de columnas/tablas, constraints, tipos) útiles para un atacante en reconocimiento, y en general es mala práctica de seguridad por diseño (no defensa en profundidad).

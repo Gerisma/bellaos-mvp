@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendWhatsApp } from "@/lib/whatsapp";
+import { safeError } from "@/lib/apiError";
 
 export async function GET(req) {
   const secret = process.env.CRON_SECRET;
@@ -36,5 +37,5 @@ export async function GET(req) {
     );
 
     return Response.json({ ok: true, recordatorios_24h: enviados24, recordatorios_2h: enviados2 });
-  } catch (e) { return Response.json({ ok: false, error: String(e.message || e) }, { status: 500 }); }
+  } catch (e) { return Response.json({ ok: false, error: safeError(e) }, { status: 500 }); }
 }

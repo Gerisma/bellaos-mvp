@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { safeError } from "@/lib/apiError";
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,5 +12,5 @@ export async function GET(req) {
     }
     const { data } = await sb.from("conversations").select("id,canal,estado,created_at,contacts(nombre,telefono)").eq("tenant_id", tenant_id).order("created_at", { ascending: false }).limit(50);
     return Response.json({ conversations: data || [] });
-  } catch (e) { return Response.json({ error: String(e.message || e) }); }
+  } catch (e) { return Response.json({ error: safeError(e) }, { status: 500 }); }
 }

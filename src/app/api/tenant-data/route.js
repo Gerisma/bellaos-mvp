@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { safeError } from "@/lib/apiError";
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -10,6 +11,6 @@ export async function GET(req) {
     ]);
     return Response.json({ contacts: contacts || [], services: services || [] });
   } catch (e) {
-    return Response.json({ contacts: [], services: [], error: String(e.message || e) });
+    return Response.json({ contacts: [], services: [], error: safeError(e) }, { status: 500 });
   }
 }

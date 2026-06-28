@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { safeError } from "@/lib/apiError";
 
 export async function GET(req) {
   try {
@@ -12,7 +13,7 @@ export async function GET(req) {
       .order("inicio", { ascending: true });
     return Response.json({ appointments: data || [] });
   } catch (e) {
-    return Response.json({ appointments: [], error: String(e.message || e) });
+    return Response.json({ appointments: [], error: safeError(e) }, { status: 500 });
   }
 }
 
@@ -30,6 +31,6 @@ export async function POST(req) {
     }
     return Response.json({ ok: true, appointment: data });
   } catch (e) {
-    return Response.json({ ok: false, error: String(e.message || e) }, { status: 500 });
+    return Response.json({ ok: false, error: safeError(e) }, { status: 500 });
   }
 }

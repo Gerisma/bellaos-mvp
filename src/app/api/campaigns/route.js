@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { incUsage, getUsage } from "@/lib/usage";
+import { safeError } from "@/lib/apiError";
 
 export async function GET(req) {
   try {
@@ -14,7 +15,7 @@ export async function GET(req) {
     }
     const { data } = await sb.from("campaigns").select("*").eq("tenant_id", tenant_id).order("created_at", { ascending: false });
     return Response.json({ campaigns: data || [] });
-  } catch (e) { return Response.json({ error: String(e.message || e) }); }
+  } catch (e) { return Response.json({ error: safeError(e) }, { status: 500 }); }
 }
 
 export async function POST(req) {
@@ -32,7 +33,7 @@ export async function POST(req) {
     if (error) throw error;
     if (inactivas?.length) await sb.from("campaign_targets").insert(inactivas.map(c => ({ campaign_id: camp.id, contact_id: c.id })));
     return Response.json({ ok: true, campaign_id: camp.id, total: inactivas?.length || 0 });
-  } catch (e) { return Response.json({ ok: false, error: String(e.message || e) }, { status: 500 }); }
+  } catch (e) { return Response.json({ ok: false, error: safeError(e) }, { status: 500 }); }
 }
 
 // Enviar tanda respetando el tope mensual (si está configurado) y contando el consumo.
@@ -63,5 +64,5 @@ export async function PATCH(req) {
     uso = await getUsage(sb, camp.tenant_id);
     const frenado = uso.tope != null && (uso.used >= uso.tope) && (targets?.length || 0) >= permitido;
     return Response.json({ ok: true, enviados, frenado, uso });
-  } catch (e) { return Response.json({ ok: false, error: String(e.message || e) }, { status: 500 }); }
+  } catch (e) { return Response.json({ ok: false, error: safeError(e) }, { status: 500 }); }
 }
