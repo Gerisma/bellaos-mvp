@@ -6,6 +6,8 @@
 
 Se revisó la totalidad de las rutas API (`src/app/api/**`), las páginas de UI, las librerías (`src/lib/*.js`), el esquema de Supabase (`supabase/schema.sql`), `vercel.json` y la configuración de entorno (`.env.example`, `.gitignore`). Total de hallazgos: **5 Críticos, 6 Altos, 7 Medios, 5 Bajos**.
 
+**Estado final (2026-06-28):** los 23 hallazgos fueron tratados — 19 resueltos, 4 mitigados (documentados como tales: #7, #8, #11, #22) y 2 sin acción porque el propio análisis concluyó que no eran vulnerabilidades reales (#15, #20). Ver la sección "Estado de remediación" para el detalle de cada uno y las acciones pendientes del usuario (variables de entorno nuevas).
+
 Los tres riesgos más urgentes:
 1. **Ausencia total de aislamiento por tenant en RLS combinada con uso exclusivo de `service_role`** — todas las rutas usan `supabaseAdmin()` (bypassea RLS), y solo existe una policy real en `contacts` (`supabase/schema.sql:83`); el resto de tablas tienen RLS activado pero sin policies. La seguridad multi-tenant depende 100% de que cada ruta filtre manualmente por `tenant_id`, y al menos una no lo hace (`src/app/panel/page.js`).
 2. **Webhook de WhatsApp sin validación de firma HMAC** (`src/app/api/webhook/whatsapp/route.js`) — cualquiera puede invocar el endpoint con un payload falso, inyectar mensajes, disparar consumo de LLM/WhatsApp o hacer DoS.
@@ -34,13 +36,15 @@ Los 5 hallazgos Críticos fueron corregidos:
 
 **Alto — #11 mitigado:** `src/middleware.js` ahora aplica rate limiting por IP a `/api/webhook/whatsapp` (30/min), `/api/chat` (20/min) y `/api/cron/recordatorios` (6/min) usando un contador en memoria. **Limitación conocida:** el contador vive en memoria de cada instancia de la función serverless, por lo que en Vercel (múltiples instancias concurrentes) el límite real efectivo es más alto que el nominal y se resetea en cada cold start. Para un límite robusto y consistente entre instancias se necesita un store compartido (Upstash Redis / Vercel Edge Config), pendiente como mejora futura.
 
-Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos quedan pendientes de remediación.
+Con esto, los 6 hallazgos Altos quedan resueltos o mitigados.
 
 **Medio — #12 resuelto:** `getUsage` ahora lanza un error explícito (`status: 404`) si el `tenant_id` no existe. Se agregó `errorResponse(e)` en `src/lib/apiError.js` que distingue errores con `status` propio (los expone, ej. "Tenant no encontrado") de errores inesperados (mensaje genérico + log). `/api/usage` y `/api/informes` lo usan, así que un `tenant_id` inválido devuelve 404 en vez de "0/800 usados".
 
 **Medio — #13 resuelto:** `/api/campaigns` PATCH ahora hace un `count` real de `campaign_targets` con `estado=pendiente` después de enviar la tanda, y solo reporta `frenado: true` si efectivamente quedan pendientes Y se alcanzó el tope — ya no infiere por longitud del batch.
 
 **Medio — #14 mitigado:** se creó `src/lib/validate.js` (helpers `isUuid`, `isValidDate`, `isNonEmptyString`, sin agregar una librería de esquemas) y se aplicó a los tres ejemplos puntuales señalados en el hallazgo: `POST /api/appointments` (valida `tenant_id`/`contact_id`/`service_id` como UUID e `inicio` como fecha válida, 400 si no), `POST /api/tenants` (rechaza `name` vacío) y `POST /api/usage` (rechaza `tope_marketing` no numérico o negativo). **No es cobertura total**: el resto de rutas POST/PATCH (`campaigns`, `conversations` no aplica por ser GET) sigue sin validación de esquema; se priorizaron los casos con mayor riesgo de datos corruptos.
+
+**Medio — #15 sin acción:** el propio hallazgo concluye que la ausencia de CORS explícito no es una vulnerabilidad (es lo seguro por defecto en Next.js App Router); queda documentado para cuando se implemente el canal de chat web (roadmap punto 7), que sí necesitará CORS configurado a propósito en esa ruta puntual.
 
 **Medio — #16 resuelto:** se creó `src/hooks/useTenants.js` (carga `/api/tenants`, selecciona el primero, expone `error`) y se refactorizaron las 6 páginas que repetían la lógica (`agenda`, `probador`, `reactivador`, `informes`, `conversaciones`, `panel`) para usarlo. Un cambio futuro en cómo se selecciona el tenant (ej. al agregar Auth) ahora se hace en un solo lugar.
 
@@ -49,6 +53,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 **Medio — #18 resuelto:** el `.limit(50)` desapareció al migrar `/panel` a `/api/tenant-data` (fix #1), que no tiene tope — ya no se ocultan contactos silenciosamente. Se agregó además un buscador por nombre client-side para usabilidad con bases grandes; paginación real del lado del servidor queda como mejora futura si la base de contactos crece mucho más.
 
 **Bajo — #19 resuelto:** el placeholder `bellaos_verify` se quitó de `.env.example` durante la corrección de los críticos (queda vacío como el resto de las variables).
+
+**Bajo — #20 sin acción:** el propio hallazgo lo califica como cosmético y "ninguna acción urgente" — se deja documentado sin cambio de código.
 
 **Bajo — #21 resuelto:** se agregó el guard `tenants.length === 0` con el mensaje "No hay negocios todavía. Creá uno en /onboarding." en `probador`, `agenda`, `reactivador`, `informes` y `conversaciones` (mismo patrón ya usado en `panel`). El formulario/tabla de cada página queda oculto hasta que existe al menos un tenant, evitando acciones con `tenantId=""`.
 
