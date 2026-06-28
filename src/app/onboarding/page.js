@@ -12,7 +12,12 @@ export default function Onboarding() {
     try {
       const res = await fetch("/api/tenants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...f, services }) });
       const data = await res.json();
-      setMsg(data.ok ? { ok: true, text: `¡Negocio creado! Ya podés probarlo en el Probador.` } : { ok: false, text: data.error || "Error" });
+      if (data.ok) {
+        setMsg({ ok: true, text: "¡Negocio creado! Te llevamos al panel…" });
+        window.location.href = "/";
+      } else {
+        setMsg({ ok: false, text: data.error || "Error" });
+      }
     } catch {
       setMsg({ ok: false, text: "No se pudo conectar con el servidor. Probá de nuevo." });
     } finally {

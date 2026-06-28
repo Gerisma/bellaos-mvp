@@ -1,33 +1,32 @@
-import { supabaseAdmin } from "@/lib/supabase";
-import { safeError } from "@/lib/apiError";
+import { supabaseServer } from "@/lib/supabaseServer";
+import { getCurrentTenantId } from "@/lib/auth";
+import { errorResponse } from "@/lib/apiError";
 import { isUuid, isValidDate } from "@/lib/validate";
 
-export async function GET(req) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const tenant_id = searchParams.get("tenant_id");
-    if (!tenant_id) return Response.json({ appointments: [], error: "Falta tenant_id" }, { status: 400 });
-    const sb = supabaseAdmin();
+    const sb = await supabaseServer();
+    const tenant_id = await getCurrentTenantId(sb);
     const { data } = await sb.from("appointments")
       .select("id,inicio,estado,sena_pagada,contact_id,service_id")
       .eq("tenant_id", tenant_id)
       .order("inicio", { ascending: true });
     return Response.json({ appointments: data || [] });
   } catch (e) {
-    return Response.json({ appointments: [], error: safeError(e) }, { status: 500 });
+    return errorResponse(e, { appointments: [] });
   }
 }
 
 export async function POST(req) {
   try {
+    const sb = await supabaseServer();
+    const tenant_id = await getCurrentTenantId(sb);
     const b = await req.json();
-    if (!isUuid(b.tenant_id)) return Response.json({ ok: false, error: "tenant_id inválido" }, { status: 400 });
     if (!isValidDate(b.inicio)) return Response.json({ ok: false, error: "inicio inválido" }, { status: 400 });
     if (b.contact_id && !isUuid(b.contact_id)) return Response.json({ ok: false, error: "contact_id inválido" }, { status: 400 });
     if (b.service_id && !isUuid(b.service_id)) return Response.json({ ok: false, error: "service_id inválido" }, { status: 400 });
-    const sb = supabaseAdmin();
     const { data, error } = await sb.from("appointments").insert({
-      tenant_id: b.tenant_id, contact_id: b.contact_id || null,
+      tenant_id, contact_id: b.contact_id || null,
       service_id: b.service_id || null, inicio: b.inicio, estado: "agendado",
     }).select().single();
     if (error) throw error;
@@ -36,6 +35,6 @@ export async function POST(req) {
     }
     return Response.json({ ok: true, appointment: data });
   } catch (e) {
-    return Response.json({ ok: false, error: safeError(e) }, { status: 500 });
+    return errorResponse(e, { ok: false });
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
 // Rate limiting básico en memoria por IP, por endpoint público.
 // Mitigación de abuso/flood (no es a prueba de múltiples instancias serverless,
@@ -25,11 +26,12 @@ function rateLimited(pathname, ip) {
   return bucket.count > rule.max;
 }
 
-// Gate temporal mientras no existe Supabase Auth real (roadmap punto 2).
-// Protege toda la app con una contraseña compartida; el webhook de WhatsApp
-// y el cron de recordatorios quedan exentos porque ya validan su propio
-// secreto (HMAC / CRON_SECRET) y deben seguir siendo accesibles por Meta/Vercel.
-export function middleware(req) {
+// Rutas accesibles sin sesión: el webhook y el cron validan su propio
+// secreto (HMAC / CRON_SECRET) y deben seguir siendo accesibles por
+// Meta/Vercel; login/signup son, justamente, cómo se consigue la sesión.
+const PUBLIC_PATHS = ["/login", "/signup", "/api/webhook/whatsapp", "/api/cron/recordatorios"];
+
+export async function middleware(req) {
   const { pathname } = req.nextUrl;
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
 
@@ -41,19 +43,47 @@ export function middleware(req) {
     return NextResponse.next();
   }
 
-  const user = process.env.APP_BASIC_AUTH_USER;
-  const pass = process.env.APP_BASIC_AUTH_PASS;
-  if (!user || !pass) return NextResponse.next();
+  let supabaseResponse = NextResponse.next({ request: req });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({ request: req });
+          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
+        },
+      },
+    }
+  );
 
-  const auth = req.headers.get("authorization");
-  if (auth?.startsWith("Basic ")) {
-    const [u, p] = Buffer.from(auth.slice(6), "base64").toString().split(":");
-    if (u === user && p === pass) return NextResponse.next();
+  const { data: { user } } = await supabase.auth.getUser();
+  const isPublic = PUBLIC_PATHS.includes(pathname);
+
+  if (!user) {
+    if (isPublic) return supabaseResponse;
+    if (pathname.startsWith("/api")) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL("/login", req.url));
   }
-  return new NextResponse("Auth requerido", {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="BellaOS"' },
-  });
+
+  if (pathname === "/login" || pathname === "/signup") {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  if (!pathname.startsWith("/api") && pathname !== "/onboarding") {
+    const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
+    if (!profile?.tenant_id) {
+      return NextResponse.redirect(new URL("/onboarding", req.url));
+    }
+  }
+
+  return supabaseResponse;
 }
 
 export const config = {

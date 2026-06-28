@@ -1,11 +1,12 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabaseServer";
+import { getCurrentTenantId } from "@/lib/auth";
 import { getUsage } from "@/lib/usage";
 import { errorResponse } from "@/lib/apiError";
 
-export async function GET(req) {
+export async function GET() {
   try {
-    const tenant_id = new URL(req.url).searchParams.get("tenant_id");
-    const sb = supabaseAdmin();
+    const sb = await supabaseServer();
+    const tenant_id = await getCurrentTenantId(sb);
     const [appts, contacts, targets, uso] = await Promise.all([
       sb.from("appointments").select("id,services(precio),contacts(canal)").eq("tenant_id", tenant_id),
       sb.from("contacts").select("stage,canal").eq("tenant_id", tenant_id),

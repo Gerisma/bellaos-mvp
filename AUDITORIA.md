@@ -6,7 +6,7 @@
 
 Se revisó la totalidad de las rutas API (`src/app/api/**`), las páginas de UI, las librerías (`src/lib/*.js`), el esquema de Supabase (`supabase/schema.sql`), `vercel.json` y la configuración de entorno (`.env.example`, `.gitignore`). Total de hallazgos: **5 Críticos, 6 Altos, 7 Medios, 5 Bajos**.
 
-**Estado final (2026-06-28):** los 23 hallazgos fueron tratados — 19 resueltos, 4 mitigados (documentados como tales: #7, #8, #11, #22) y 2 sin acción porque el propio análisis concluyó que no eran vulnerabilidades reales (#15, #20). Ver la sección "Estado de remediación" para el detalle de cada uno y las acciones pendientes del usuario (variables de entorno nuevas).
+**Estado final (2026-06-28):** los 23 hallazgos fueron tratados — 21 resueltos (incluyendo #7 y #8, que pasaron de mitigados a resueltos de forma definitiva al implementar Supabase Auth real), 2 mitigados (#11, #22) y 2 sin acción porque el propio análisis concluyó que no eran vulnerabilidades reales (#15, #20). Ver la sección "Estado de remediación" para el detalle de cada uno y las acciones pendientes del usuario (variables de entorno nuevas).
 
 Los tres riesgos más urgentes:
 1. **Ausencia total de aislamiento por tenant en RLS combinada con uso exclusivo de `service_role`** — todas las rutas usan `supabaseAdmin()` (bypassea RLS), y solo existe una policy real en `contacts` (`supabase/schema.sql:83`); el resto de tablas tienen RLS activado pero sin policies. La seguridad multi-tenant depende 100% de que cada ruta filtre manualmente por `tenant_id`, y al menos una no lo hace (`src/app/panel/page.js`).
@@ -26,9 +26,15 @@ Los 5 hallazgos Críticos fueron corregidos:
 
 **Alto — #6 resuelto:** se agregaron las policies `tenant_isolation` faltantes en `supabase/schema.sql` (brand_profiles, services, conversations, messages, appointments, campaigns, campaign_targets, knowledge_base, usage_metrics). Al verificar contra la base real (`kcslhhupssvetmbigorl`) se constató que ya estaban aplicadas allí desde una migración previa no reflejada en el archivo — el cambio deja el `schema.sql` consistente con el estado real de la base.
 
-**Alto — #7 y #8 mitigados:** se agregó `src/middleware.js`, un gate de Basic Auth controlado por `APP_BASIC_AUTH_USER`/`APP_BASIC_AUTH_PASS` que protege toda la app (excepto el webhook de WhatsApp y el cron, que ya validan su propio secreto). Esto cierra el acceso público no autenticado mientras no exista Supabase Auth real. **No es la remediación completa**: sigue sin haber sesión por usuario ni validación de que un `tenant_id` pertenece al solicitante — cualquiera que conozca la contraseña compartida puede seguir leyendo/escribiendo cualquier tenant. La solución definitiva (Supabase Auth + `tenant_id` en JWT, roadmap punto 2) queda pendiente.
+**Alto — #7 y #8 resueltos de forma definitiva (2026-06-28):** el gate temporal de Basic Auth fue reemplazado por autenticación real con Supabase Auth (email + contraseña):
+- Tabla `profiles` (vincula `auth.users` con un `tenant_id`) + trigger `handle_new_user` que crea el perfil al registrarse. Sin policy de update/insert para el usuario — el `tenant_id` solo lo asigna el server (`POST /api/tenants`) tras crear el negocio, así nadie puede auto-asignarse un tenant ajeno adivinando un UUID.
+- Las policies `tenant_isolation` de `contacts, brand_profiles, services, conversations, messages, appointments, campaigns, campaign_targets, knowledge_base, usage_metrics` se reescribieron de `auth.jwt() ->> 'tenant_id'` (un claim custom que nunca se configuró) a una subquery contra `profiles` usando `auth.uid()` (siempre disponible, sin Auth Hooks) — ahora `with check` también, cubriendo inserts/updates, no solo lecturas. Se agregó la policy faltante `tenants_select_own` (la tabla `tenants` tenía RLS activado sin ninguna policy, confirmado con `get_advisors`).
+- `src/lib/supabaseBrowser.js` y `src/lib/supabaseServer.js` (con `@supabase/ssr`) reemplazan a `service_role` en las rutas de lectura del dashboard (`appointments`, `tenant-data`, `conversations`, `informes`, `campaigns`, `usage`, `chat`) — esas rutas ya no leen `tenant_id` del cliente, lo resuelven server-side vía `src/lib/auth.js` (`getCurrentTenantId`) y dejan que RLS filtre el resto. `service_role` queda limitado a: el webhook de WhatsApp y el cron (sin sesión de usuario por diseño) y la creación del tenant durante el alta de negocio.
+- `src/middleware.js` verifica la sesión de Supabase en cada request (refresca cookies), redirige a `/login` sin sesión, a `/onboarding` si todavía no tiene negocio, y bloquea `/login`/`/signup` si ya está logueado. El rate limiting en memoria para webhook/chat/cron se mantiene igual.
+- `/panel` (Contactos) deja de pasar por una ruta API: lee `contacts` directo desde el navegador con `supabaseBrowser()`, demostrando RLS activo sin `service_role` de punta a punta.
+- El selector de negocio (`useTenants`, eliminado) desaparece de todas las páginas: cada usuario ve únicamente los datos de su propio tenant, resuelto por su sesión, no por un `<select>` manipulable.
 
-**Acción requerida del usuario:** definir `APP_BASIC_AUTH_USER` y `APP_BASIC_AUTH_PASS` en `.env.local` y en Vercel. Si no se definen, el middleware no bloquea nada (fail-open intencional para no romper el entorno de desarrollo local existente).
+Con esto, "saber el UUID de un tenant" ya no alcanza para nada — sin sesión válida y sin pertenecer a ese tenant, ni las rutas API ni Postgres (RLS) devuelven datos.
 
 **Alto — #9 resuelto:** se creó `src/lib/apiError.js` (`safeError(e)`: loggea el error completo con `console.error` y devuelve un mensaje genérico) y se reemplazó el patrón `String(e.message || e)` en las 13 ocurrencias de las 9 rutas afectadas (`appointments`, `campaigns`, `conversations`, `usage`, `informes`, `chat`, `tenants`, `tenant-data`, `cron/recordatorios`). Ya no se exponen detalles de esquema/Postgres al cliente.
 
@@ -62,7 +68,7 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados.
 
 **Bajo — #23 resuelto:** se agregó `unique(tenant_id, telefono)` en `contacts` (migración aplicada en Supabase, verificado que no había duplicados previos, y reflejada en `schema.sql`). `persistInbound` ahora, si el insert choca contra esa constraint por una carrera entre dos mensajes casi simultáneos, recupera el contacto ya creado por la otra request en vez de fallar o duplicar.
 
-**Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
+**Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`. Sin ellas, el webhook y el cron quedan inoperantes (fail-closed por diseño). `APP_BASIC_AUTH_USER`/`APP_BASIC_AUTH_PASS` quedaron obsoletas (reemplazadas por Supabase Auth) y se quitaron de `.env.example`.
 
 ## Crítico
 
@@ -104,13 +110,13 @@ Descripción: `alter table ... enable row level security` se ejecuta para `brand
 Riesgo/Impacto: si en el futuro se usa el cliente `anon`/`authenticated` (por ejemplo al implementar Auth real, paso 2 del roadmap) en vez de `service_role` para alguna de estas tablas, todas las queries fallarían silenciosamente (RLS sin policy = deny-all) o, peor, si se crea una policy mal escrita, podría haber fuga cross-tenant. Hoy el riesgo es mitigado porque solo se usa `service_role`, pero eso traslada el 100% de la responsabilidad de aislamiento al código de aplicación (ver hallazgos relacionados).
 Remediación sugerida: crear policies `tenant_isolation` equivalentes a la de `contacts` para cada tabla con `tenant_id`, usando `auth.jwt() ->> 'tenant_id'`, antes de migrar a Supabase Auth.
 
-#### 7. [MITIGADO] Uso exclusivo de `service_role` en todas las rutas API sin capa de verificación de pertenencia
+#### 7. [RESUELTO] Uso exclusivo de `service_role` en todas las rutas API sin capa de verificación de pertenencia
 **Archivo:** `src/lib/supabase.js:4-9` (usado en todas las rutas bajo `src/app/api/**`)
 Descripción: no existe ningún middleware/helper que valide que el `tenant_id` recibido por query param o body realmente corresponde al usuario autenticado (hoy no hay autenticación de usuario en absoluto, ver hallazgo #8). Cualquier `tenant_id` válido (UUID) que se conozca o adivine permite leer/escribir datos de ese tenant desde cualquier ruta.
 Riesgo/Impacto: con `service_role` bypasseando RLS, el único control de acceso es "saber el UUID del tenant". No hay sesión de usuario que limite qué tenant_id puede consultar cada cliente.
 Remediación sugerida: implementar Supabase Auth (roadmap punto 2) y validar en cada ruta que el `tenant_id` del JWT coincide con el solicitado, antes de pasar a producción real con más de un tenant.
 
-#### 8. [MITIGADO] No hay autenticación de usuario en ninguna ruta API ni página
+#### 8. [RESUELTO] No hay autenticación de usuario en ninguna ruta API ni página
 **Archivo:** todas las rutas en `src/app/api/**`, todas las páginas con selector de tenant (`src/app/agenda/page.js`, `src/app/reactivador/page.js`, etc.)
 Descripción: `/api/tenants` GET devuelve la lista completa de negocios sin autenticación; cualquier visitante puede ver todos los tenants y, combinando con el resto de endpoints, leer/escribir datos de cualquiera.
 Riesgo/Impacto: en el estado actual (probablemente solo localhost/demo) es aceptable, pero el roadmap indica que el deploy a Vercel (`punto 10`) está pendiente; si se despliega antes de implementar auth, la aplicación entera queda abierta públicamente sin control de acceso.

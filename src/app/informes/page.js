@@ -1,28 +1,20 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useTenants } from "@/hooks/useTenants";
 const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-AR");
 const STAGES = { lead_nuevo: "Lead nuevo", en_conversacion: "En conversación", turno_agendado: "Turno agendado", activa: "Cliente activa", en_riesgo: "En riesgo", reactivada: "Reactivada", inactiva: "Inactiva" };
 export default function Informes() {
-  const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [d, setD] = useState(null);
   useEffect(() => {
-    if (!tenantId) return;
-    setD(null);
-    fetch(`/api/informes?tenant_id=${tenantId}`).then(r => r.json()).then(setD)
+    fetch("/api/informes").then(r => r.json()).then(setD)
       .catch(() => setD({ error: "No se pudo conectar con el servidor." }));
-  }, [tenantId]);
+  }, []);
   const max = d ? Math.max(1, ...Object.values(d.embudo || {})) : 1;
   const u = d?.uso;
   return (
     <>
       <h1>Informes</h1>
       <p className="lead">Todo el rendimiento dentro del sistema. Sin envíos por WhatsApp.</p>
-      {tenantsError && <p className="err">{tenantsError}</p>}
-      {tenants.length === 0 && !tenantsError ? <p className="muted">No hay negocios todavía. Creá uno en /onboarding.</p> : (
-      <select className="selw" value={tenantId} onChange={e => setTenantId(e.target.value)}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
-      )}
-      {tenants.length > 0 && (!d ? <p className="muted" style={{ marginTop: 20 }}>Cargando…</p> : d.error ? <p className="err">{d.error}</p> : (
+      {!d ? <p className="muted" style={{ marginTop: 20 }}>Cargando…</p> : d.error ? <p className="err">{d.error}</p> : (
         <div style={{ marginTop: 16 }}>
           <div className="kpis">
             <div className="card kpi"><div className="lbl">Turnos agendados</div><div className="val">{d.turnos}</div></div>
@@ -58,7 +50,7 @@ export default function Informes() {
             </div>
           </div>
         </div>
-      ))}
+      )}
     </>
   );
 }

@@ -1,21 +1,24 @@
 import { supabaseAdmin } from "@/lib/supabase";
-import { safeError } from "@/lib/apiError";
+import { supabaseServer } from "@/lib/supabaseServer";
+import { getCurrentUserId } from "@/lib/auth";
+import { errorResponse } from "@/lib/apiError";
 import { isNonEmptyString } from "@/lib/validate";
 
-export async function GET() {
-  try {
-    const sb = supabaseAdmin();
-    const { data } = await sb.from("tenants").select("id,name,plan,status").order("name");
-    return Response.json({ tenants: data || [] });
-  } catch (e) {
-    return Response.json({ tenants: [], error: "Sin conexión a Supabase" });
-  }
-}
-
+// Alta de negocio: crea el tenant y lo asigna al usuario autenticado.
+// Server-side con service_role porque es una operación de setup privilegiada
+// (no una lectura) — el tenant_id nunca viene del cliente, lo generamos acá.
 export async function POST(req) {
   try {
+    const sbSession = await supabaseServer();
+    const userId = await getCurrentUserId(sbSession);
+    const { data: profile } = await sbSession.from("profiles").select("tenant_id").eq("id", userId).single();
+    if (profile?.tenant_id) {
+      return Response.json({ ok: false, error: "Ya tenés un negocio creado" }, { status: 409 });
+    }
+
     const b = await req.json();
     if (!isNonEmptyString(b.name)) return Response.json({ ok: false, error: "El nombre del negocio es obligatorio" }, { status: 400 });
+
     const sb = supabaseAdmin();
     const { data: tenant, error } = await sb
       .from("tenants")
@@ -32,8 +35,9 @@ export async function POST(req) {
       duracion_min: Number(s.duracion_min) || null, recompra_dias: Number(s.recompra_dias) || null,
     }));
     if (services.length) await sb.from("services").insert(services);
+    await sb.from("profiles").update({ tenant_id: tenant.id }).eq("id", userId);
     return Response.json({ ok: true, tenant_id: tenant.id });
   } catch (e) {
-    return Response.json({ ok: false, error: safeError(e) }, { status: 500 });
+    return errorResponse(e, { ok: false });
   }
 }

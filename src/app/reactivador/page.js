@@ -1,23 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useTenants } from "@/hooks/useTenants";
 const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-AR");
 export default function Reactivador() {
-  const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [inactivas, setInactivas] = useState([]); const [campaigns, setCampaigns] = useState([]);
   const [uso, setUso] = useState(null); const [tope, setTope] = useState(""); const [msg, setMsg] = useState(null);
-  useEffect(() => { if (tenantId) refresh(); }, [tenantId]);
+  useEffect(() => { refresh(); }, []);
   function refresh() {
-    fetch(`/api/campaigns?tenant_id=${tenantId}&inactivas=1`).then(r => r.json()).then(d => setInactivas(d.inactivas || []))
+    fetch("/api/campaigns?inactivas=1").then(r => r.json()).then(d => setInactivas(d.inactivas || []))
       .catch(() => setMsg({ ok: false, text: "No se pudieron cargar las inactivas." }));
-    fetch(`/api/campaigns?tenant_id=${tenantId}`).then(r => r.json()).then(d => setCampaigns(d.campaigns || []))
+    fetch("/api/campaigns").then(r => r.json()).then(d => setCampaigns(d.campaigns || []))
       .catch(() => setMsg({ ok: false, text: "No se pudieron cargar las campañas." }));
-    fetch(`/api/usage?tenant_id=${tenantId}`).then(r => r.json()).then(u => { setUso(u); setTope(u.tope ?? ""); })
+    fetch("/api/usage").then(r => r.json()).then(u => { setUso(u); setTope(u.tope ?? ""); })
       .catch(() => setMsg({ ok: false, text: "No se pudo cargar el consumo." }));
   }
   async function crear() {
     try {
-      const res = await fetch("/api/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId }) });
+      const res = await fetch("/api/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
       const d = await res.json(); setMsg(d.ok ? { ok: true, text: `Campaña creada con ${d.total} inactivas.` } : { ok: false, text: d.error }); refresh();
     } catch { setMsg({ ok: false, text: "No se pudo conectar con el servidor." }); }
   }
@@ -33,7 +31,7 @@ export default function Reactivador() {
   }
   async function guardarTope() {
     try {
-      const res = await fetch("/api/usage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId, tope_marketing: tope }) });
+      const res = await fetch("/api/usage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tope_marketing: tope }) });
       const d = await res.json();
       if (d.ok) { setUso(d.uso); setMsg({ ok: true, text: "Tope guardado." }); } else setMsg({ ok: false, text: d.error });
     } catch { setMsg({ ok: false, text: "No se pudo conectar con el servidor." }); }
@@ -42,12 +40,6 @@ export default function Reactivador() {
     <>
       <h1>Reactivador de inactivas</h1>
       <p className="lead">Detecta clientas dormidas y les manda una campaña por tandas, sin pasarte del presupuesto.</p>
-      {tenantsError && <p className="err">{tenantsError}</p>}
-      {tenants.length === 0 && !tenantsError ? (
-        <p className="muted">No hay negocios todavía. Creá uno en /onboarding.</p>
-      ) : (
-        <>
-      <select className="selw" value={tenantId} onChange={e => setTenantId(e.target.value)}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
 
       {uso && (
         <div className="card" style={{ margin: "16px 0" }}>
@@ -84,8 +76,6 @@ export default function Reactivador() {
           </tbody>
         </table>
       </div>
-        </>
-      )}
     </>
   );
 }

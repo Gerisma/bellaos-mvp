@@ -72,6 +72,32 @@ create table usage_metrics (
   periodo date, mensajes_marketing int default 0, mensajes_utility int default 0, posts_generados int default 0
 );
 
+-- Perfil de usuario: vincula auth.users con un tenant. Sin auth.jwt() custom
+-- claims (requerirían un Auth Hook) — el aislamiento se resuelve siempre vía
+-- esta tabla y auth.uid(), que Supabase Auth siempre provee.
+create table profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  tenant_id uuid references tenants(id) on delete set null,
+  email text,
+  created_at timestamptz default now()
+);
+alter table profiles enable row level security;
+create policy profiles_select_own on profiles for select using (id = auth.uid());
+
+-- Crea el profile (sin tenant) al registrarse. tenant_id solo lo asigna el
+-- server con service_role durante el alta de negocio — no hay policy de
+-- update para el usuario, así nadie puede auto-asignarse un tenant ajeno.
+create function public.handle_new_user() returns trigger as $$
+begin
+  insert into public.profiles (id, email) values (new.id, new.email);
+  return new;
+end; $$ language plpgsql security definer set search_path = public;
+create trigger on_auth_user_created after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+-- Solo la debe poder invocar el trigger, no clientes vía /rest/v1/rpc/handle_new_user.
+revoke execute on function public.handle_new_user() from anon, authenticated, public;
+
+alter table tenants enable row level security;
 alter table brand_profiles enable row level security;
 alter table services enable row level security;
 alter table contacts enable row level security;
@@ -82,15 +108,37 @@ alter table campaigns enable row level security;
 alter table campaign_targets enable row level security;
 alter table knowledge_base enable row level security;
 alter table usage_metrics enable row level security;
-create policy tenant_isolation on contacts using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
-create policy tenant_isolation on brand_profiles using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
-create policy tenant_isolation on services using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
-create policy tenant_isolation on conversations using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
-create policy tenant_isolation on messages using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
-create policy tenant_isolation on appointments using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
-create policy tenant_isolation on campaigns using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
-create policy tenant_isolation_ct on campaign_targets using (
-  exists (select 1 from campaigns c where c.id = campaign_targets.campaign_id and c.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)
-);
-create policy tenant_isolation on knowledge_base using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
-create policy tenant_isolation on usage_metrics using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+
+create policy tenants_select_own on tenants
+  for select using (id = (select tenant_id from profiles where id = auth.uid()));
+
+create policy tenant_isolation on contacts
+  using (tenant_id = (select tenant_id from profiles where id = auth.uid()))
+  with check (tenant_id = (select tenant_id from profiles where id = auth.uid()));
+create policy tenant_isolation on brand_profiles
+  using (tenant_id = (select tenant_id from profiles where id = auth.uid()))
+  with check (tenant_id = (select tenant_id from profiles where id = auth.uid()));
+create policy tenant_isolation on services
+  using (tenant_id = (select tenant_id from profiles where id = auth.uid()))
+  with check (tenant_id = (select tenant_id from profiles where id = auth.uid()));
+create policy tenant_isolation on conversations
+  using (tenant_id = (select tenant_id from profiles where id = auth.uid()))
+  with check (tenant_id = (select tenant_id from profiles where id = auth.uid()));
+create policy tenant_isolation on messages
+  using (tenant_id = (select tenant_id from profiles where id = auth.uid()))
+  with check (tenant_id = (select tenant_id from profiles where id = auth.uid()));
+create policy tenant_isolation on appointments
+  using (tenant_id = (select tenant_id from profiles where id = auth.uid()))
+  with check (tenant_id = (select tenant_id from profiles where id = auth.uid()));
+create policy tenant_isolation on campaigns
+  using (tenant_id = (select tenant_id from profiles where id = auth.uid()))
+  with check (tenant_id = (select tenant_id from profiles where id = auth.uid()));
+create policy tenant_isolation_ct on campaign_targets
+  using (exists (select 1 from campaigns c where c.id = campaign_targets.campaign_id and c.tenant_id = (select tenant_id from profiles where id = auth.uid())))
+  with check (exists (select 1 from campaigns c where c.id = campaign_targets.campaign_id and c.tenant_id = (select tenant_id from profiles where id = auth.uid())));
+create policy tenant_isolation on knowledge_base
+  using (tenant_id = (select tenant_id from profiles where id = auth.uid()))
+  with check (tenant_id = (select tenant_id from profiles where id = auth.uid()));
+create policy tenant_isolation on usage_metrics
+  using (tenant_id = (select tenant_id from profiles where id = auth.uid()))
+  with check (tenant_id = (select tenant_id from profiles where id = auth.uid()));

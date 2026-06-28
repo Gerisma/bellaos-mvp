@@ -1,5 +1,4 @@
 const tiles = [
-  { h: "/onboarding", ic: "➕", t: "Alta de negocio", s: "Configurá una estética" },
   { h: "/probador", ic: "🤖", t: "Probador del asistente", s: "Chateá con el cerebro" },
   { h: "/panel", ic: "👥", t: "Contactos", s: "Clientas en Supabase" },
   { h: "/agenda", ic: "📅", t: "Agenda", s: "Turnos en la base" },
