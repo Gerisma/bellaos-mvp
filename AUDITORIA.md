@@ -52,6 +52,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 
 **Bajo — #21 resuelto:** se agregó el guard `tenants.length === 0` con el mensaje "No hay negocios todavía. Creá uno en /onboarding." en `probador`, `agenda`, `reactivador`, `informes` y `conversaciones` (mismo patrón ya usado en `panel`). El formulario/tabla de cada página queda oculto hasta que existe al menos un tenant, evitando acciones con `tenantId=""`.
 
+**Bajo — #22 mitigado:** `ruleBasedReply` en `src/lib/brain.js` ahora matchea servicios por palabra completa (`\bpalabra\b`, ignorando palabras de ≤2 letras) en vez de `includes` con la primera palabra del nombre, evitando falsos positivos como "Color" matcheando dentro de "colorido". Sigue siendo un matching simple por regex, no tokenización/fuzzy real — mejora completa queda para cuando se trabaje la calidad del motor de reglas.
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -188,7 +190,7 @@ Descripción: si `tenants` está vacío (no hay negocios creados aún), los `<se
 Riesgo/Impacto: bajo, UX confusa en el primer uso (antes de dar de alta el primer negocio).
 Remediación sugerida: mostrar un mensaje guía cuando `tenants.length === 0`.
 
-#### 22. `classifyIntent` y `ruleBasedReply` usan reglas regex simples que pueden mal-clasificar
+#### 22. [MITIGADO] `classifyIntent` y `ruleBasedReply` usan reglas regex simples que pueden mal-clasificar
 **Archivo:** `src/lib/brain.js:15-23,30`
 Descripción: por ejemplo, el matching de servicio en `ruleBasedReply` (línea 30) usa `t.includes(primera_palabra_del_nombre_del_servicio)`, lo que puede dar falsos positivos con nombres de servicios cortos o ambiguos (ej. "Color" podría matchear "colorido", etc.).
 Riesgo/Impacto: bajo, calidad de respuesta del asistente sin LLM, no es un riesgo de seguridad.

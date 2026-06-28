@@ -27,7 +27,10 @@ export function ruleBasedReply(intent, text, { brand, services }) {
   const t = (text || "").toLowerCase();
   const nombre = brand?.name || "nuestro centro";
   const lista = (services || []);
-  const found = lista.find((s) => t.includes((s.nombre || "").toLowerCase().split(" ")[0]));
+  const found = lista.find((s) => {
+    const palabras = (s.nombre || "").toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+    return palabras.some((w) => new RegExp(`\\b${w}\\b`).test(t));
+  });
   switch (intent) {
     case "consultar_precio":
       if (found) return `El ${found.nombre} está $${found.precio} y dura unos ${found.duracion_min} min. ¿Querés que te busque un turno? 😊`;
