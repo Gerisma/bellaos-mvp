@@ -50,6 +50,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 
 **Bajo — #19 resuelto:** el placeholder `bellaos_verify` se quitó de `.env.example` durante la corrección de los críticos (queda vacío como el resto de las variables).
 
+**Bajo — #21 resuelto:** se agregó el guard `tenants.length === 0` con el mensaje "No hay negocios todavía. Creá uno en /onboarding." en `probador`, `agenda`, `reactivador`, `informes` y `conversaciones` (mismo patrón ya usado en `panel`). El formulario/tabla de cada página queda oculto hasta que existe al menos un tenant, evitando acciones con `tenantId=""`.
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -174,13 +176,13 @@ Descripción: el placeholder no está vacío como las demás variables, sino que
 Riesgo/Impacto: bajo — el verify token solo protege el handshake inicial `GET` de Meta, no los mensajes POST. Si no se cambia, es adivinable.
 Remediación sugerida: documentar explícitamente que debe reemplazarse por un valor aleatorio único en producción.
 
-#### 20. No hay manejo de "negocio sin servicios" más allá de un placeholder textual
+#### 20. [SIN ACCIÓN — cosmético, no urgente] No hay manejo de "negocio sin servicios" más allá de un placeholder textual
 **Archivo:** `src/lib/brain.js:9-11`
 Descripción: si `services` está vacío, el prompt dice `(sin servicios cargados)`; está bien manejado para el LLM, pero `ruleBasedReply` (línea 35) responde genérico sin advertir al operador del negocio que faltan datos.
 Riesgo/Impacto: bajo, cosmético/UX.
 Remediación sugerida: ninguna acción urgente.
 
-#### 21. Falta estado de "tenant no seleccionado" explícito en varias páginas
+#### 21. [RESUELTO] Falta estado de "tenant no seleccionado" explícito en varias páginas
 **Archivo:** `src/app/probador/page.js`, `src/app/agenda/page.js`, `src/app/reactivador/page.js`, `src/app/informes/page.js`
 Descripción: si `tenants` está vacío (no hay negocios creados aún), los `<select>` quedan vacíos sin mensaje ("No hay negocios, creá uno en /onboarding"), y las acciones (enviar, crear turno) podrían dispararse con `tenantId=""`.
 Riesgo/Impacto: bajo, UX confusa en el primer uso (antes de dar de alta el primer negocio).

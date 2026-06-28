@@ -19,8 +19,10 @@ export default function Informes() {
       <h1>Informes</h1>
       <p className="lead">Todo el rendimiento dentro del sistema. Sin envíos por WhatsApp.</p>
       {tenantsError && <p className="err">{tenantsError}</p>}
+      {tenants.length === 0 && !tenantsError ? <p className="muted">No hay negocios todavía. Creá uno en /onboarding.</p> : (
       <select className="selw" value={tenantId} onChange={e => setTenantId(e.target.value)}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
-      {!d ? <p className="muted" style={{ marginTop: 20 }}>Cargando…</p> : d.error ? <p className="err">{d.error}</p> : (
+      )}
+      {tenants.length > 0 && (!d ? <p className="muted" style={{ marginTop: 20 }}>Cargando…</p> : d.error ? <p className="err">{d.error}</p> : (
         <div style={{ marginTop: 16 }}>
           <div className="kpis">
             <div className="card kpi"><div className="lbl">Turnos agendados</div><div className="val">{d.turnos}</div></div>
@@ -56,7 +58,7 @@ export default function Informes() {
             </div>
           </div>
         </div>
-      )}
+      ))}
     </>
   );
 }

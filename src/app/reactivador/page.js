@@ -43,6 +43,10 @@ export default function Reactivador() {
       <h1>Reactivador de inactivas</h1>
       <p className="lead">Detecta clientas dormidas y les manda una campaña por tandas, sin pasarte del presupuesto.</p>
       {tenantsError && <p className="err">{tenantsError}</p>}
+      {tenants.length === 0 && !tenantsError ? (
+        <p className="muted">No hay negocios todavía. Creá uno en /onboarding.</p>
+      ) : (
+        <>
       <select className="selw" value={tenantId} onChange={e => setTenantId(e.target.value)}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
 
       {uso && (
@@ -80,6 +84,8 @@ export default function Reactivador() {
           </tbody>
         </table>
       </div>
+        </>
+      )}
     </>
   );
 }
