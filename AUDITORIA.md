@@ -48,6 +48,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 
 **Medio — #18 resuelto:** el `.limit(50)` desapareció al migrar `/panel` a `/api/tenant-data` (fix #1), que no tiene tope — ya no se ocultan contactos silenciosamente. Se agregó además un buscador por nombre client-side para usabilidad con bases grandes; paginación real del lado del servidor queda como mejora futura si la base de contactos crece mucho más.
 
+**Bajo — #19 resuelto:** el placeholder `bellaos_verify` se quitó de `.env.example` durante la corrección de los críticos (queda vacío como el resto de las variables).
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -166,7 +168,7 @@ Remediación sugerida: agregar paginación o un buscador antes de escalar a tena
 
 ## Bajo
 
-#### 19. `WHATSAPP_VERIFY_TOKEN` con valor por defecto documentado en `.env.example`
+#### 19. [RESUELTO] `WHATSAPP_VERIFY_TOKEN` con valor por defecto documentado en `.env.example`
 **Archivo:** `.env.example` (línea con `WHATSAPP_VERIFY_TOKEN=bellaos_verify`)
 Descripción: el placeholder no está vacío como las demás variables, sino que sugiere un valor real (`bellaos_verify`) que podría quedar copiado tal cual a producción si el desarrollador no lo cambia.
 Riesgo/Impacto: bajo — el verify token solo protege el handshake inicial `GET` de Meta, no los mensajes POST. Si no se cambia, es adivinable.
