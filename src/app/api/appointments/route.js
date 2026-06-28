@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { safeError } from "@/lib/apiError";
+import { isUuid, isValidDate } from "@/lib/validate";
 
 export async function GET(req) {
   try {
@@ -20,6 +21,10 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const b = await req.json();
+    if (!isUuid(b.tenant_id)) return Response.json({ ok: false, error: "tenant_id inválido" }, { status: 400 });
+    if (!isValidDate(b.inicio)) return Response.json({ ok: false, error: "inicio inválido" }, { status: 400 });
+    if (b.contact_id && !isUuid(b.contact_id)) return Response.json({ ok: false, error: "contact_id inválido" }, { status: 400 });
+    if (b.service_id && !isUuid(b.service_id)) return Response.json({ ok: false, error: "service_id inválido" }, { status: 400 });
     const sb = supabaseAdmin();
     const { data, error } = await sb.from("appointments").insert({
       tenant_id: b.tenant_id, contact_id: b.contact_id || null,

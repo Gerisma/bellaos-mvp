@@ -40,6 +40,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 
 **Medio — #13 resuelto:** `/api/campaigns` PATCH ahora hace un `count` real de `campaign_targets` con `estado=pendiente` después de enviar la tanda, y solo reporta `frenado: true` si efectivamente quedan pendientes Y se alcanzó el tope — ya no infiere por longitud del batch.
 
+**Medio — #14 mitigado:** se creó `src/lib/validate.js` (helpers `isUuid`, `isValidDate`, `isNonEmptyString`, sin agregar una librería de esquemas) y se aplicó a los tres ejemplos puntuales señalados en el hallazgo: `POST /api/appointments` (valida `tenant_id`/`contact_id`/`service_id` como UUID e `inicio` como fecha válida, 400 si no), `POST /api/tenants` (rechaza `name` vacío) y `POST /api/usage` (rechaza `tope_marketing` no numérico o negativo). **No es cobertura total**: el resto de rutas POST/PATCH (`campaigns`, `conversations` no aplica por ser GET) sigue sin validación de esquema; se priorizaron los casos con mayor riesgo de datos corruptos.
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -126,7 +128,7 @@ Descripción: `const frenado = uso.tope != null && (uso.used >= uso.tope) && (ta
 Riesgo/Impacto: mensaje confuso en la UI del Reactivador ("se alcanzó el tope") cuando en realidad la campaña simplemente se completó. Es un bug de UX/reporting, no de seguridad.
 Remediación sugerida: hacer un count separado de `campaign_targets` con `estado=pendiente` después de actualizar, y comparar contra ese número en vez de inferir por longitud del batch.
 
-#### 14. Inputs de las rutas API no se validan (tipos, presencia, formato)
+#### 14. [MITIGADO] Inputs de las rutas API no se validan (tipos, presencia, formato)
 **Archivo:** prácticamente todas las rutas POST/PATCH — ejemplos: `src/app/api/appointments/route.js:21-26` (no valida que `inicio` sea fecha válida, ni que `tenant_id` sea UUID), `src/app/api/tenants/route.js:15-19` (no valida `b.name` no vacío más allá del `required` del form HTML, fácilmente bypasseable con curl), `src/app/api/usage/route.js:11-14` (acepta cualquier string/number en `tope_marketing` sin rango)
 Descripción: no hay capa de validación de esquema (zod, yup, manual) en ninguna ruta; se confía en que el frontend manda datos bien formados.
 Riesgo/Impacto: inserciones con `null`/tipos incorrectos pueden generar errores 500 poco descriptivos o datos corruptos (ej. `inicio` inválido, `precio` no numérico) en la base. Es bajo para un atacante directo (sin RCE/injection porque se usa el cliente de Supabase con queries parametrizadas), pero medio para robustez del sistema.

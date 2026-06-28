@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { safeError } from "@/lib/apiError";
+import { isNonEmptyString } from "@/lib/validate";
 
 export async function GET() {
   try {
@@ -14,6 +15,7 @@ export async function GET() {
 export async function POST(req) {
   try {
     const b = await req.json();
+    if (!isNonEmptyString(b.name)) return Response.json({ ok: false, error: "El nombre del negocio es obligatorio" }, { status: 400 });
     const sb = supabaseAdmin();
     const { data: tenant, error } = await sb
       .from("tenants")
