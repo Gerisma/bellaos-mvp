@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BellaOS · Demo del sistema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --violeta:#6D4AFF; --violeta2:#9B6BFF; --violeta-osc:#2E2270; --rosa:#FF5D93; --rosa-cl:#FFEAF2;
+  --bg:#F4F3FB; --panel:#fff; --texto:#26213F; --suave:#8E89A6; --linea:#EDEBF6;
+  --verde:#1FBF6B; --verde-bg:#E6F9F0; --amar:#F6A609; --amar-bg:#FEF3DD;
+  --azul:#2D8CFF; --azul-bg:#E7F1FF; --rojo:#F2545B; --rojo-bg:#FDECEC;
+  --grad:linear-gradient(135deg,#6D4AFF 0%,#FF5D93 100%);
+  --grad-soft:linear-gradient(135deg,#7A57FF 0%,#B66BFF 100%);
+  --sombra:0 10px 34px rgba(60,40,120,.08); --sombra-sm:0 4px 14px rgba(60,40,120,.06);
+  --r:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--texto);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:262px 1fr;height:100vh}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#D9D5EC;border-radius:50px}
+
+/* SIDEBAR */
+.side{background:linear-gradient(185deg,#2E2270 0%,#5B3FCC 60%,#6D4AFF 100%);color:#fff;display:flex;flex-direction:column;padding:24px 16px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:12px;padding:0 8px 22px;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.14)}
+.brand .dot{width:40px;height:40px;border-radius:13px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.25rem;box-shadow:0 6px 16px rgba(255,93,147,.4)}
+.brand b{font-size:1.35rem;font-weight:800;letter-spacing:.3px}
+.brand small{display:block;opacity:.65;font-size:.62rem;font-weight:500;letter-spacing:1.5px}
+.nav-item{display:flex;align-items:center;gap:13px;padding:12px 13px;border-radius:13px;cursor:pointer;font-size:.92rem;font-weight:500;opacity:.82;margin-bottom:3px;transition:.18s;position:relative}
+.nav-item:hover{background:rgba(255,255,255,.1);opacity:1}
+.nav-item.active{background:rgba(255,255,255,.16);opacity:1;font-weight:700;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.nav-item.active::before{content:"";position:absolute;left:-16px;top:18%;height:64%;width:4px;background:var(--rosa);border-radius:0 4px 4px 0}
+.nav-item .ic{width:22px;text-align:center;font-size:1.1rem}
+.nav-sep{font-size:.62rem;text-transform:uppercase;letter-spacing:2px;opacity:.45;padding:16px 13px 6px;font-weight:700}
+.side .promo{margin-top:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:15px;padding:14px;font-size:.78rem}
+.side .promo b{display:block;margin-bottom:3px}
+.side .promo span{opacity:.75}
+
+/* MAIN */
+.main{overflow-y:auto;height:100vh}
+.topbar{position:sticky;top:0;background:rgba(244,243,251,.82);backdrop-filter:blur(12px);padding:16px 34px;display:flex;align-items:center;justify-content:space-between;z-index:20;border-bottom:1px solid var(--linea)}
+.topbar .ttl{font-size:1.4rem;font-weight:800}
+.topbar .sub{font-size:.8rem;color:var(--suave);font-weight:500}
+.topbar .right{display:flex;align-items:center;gap:12px}
+.tenant{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--linea);padding:8px 14px;border-radius:50px;font-size:.85rem;font-weight:600;cursor:pointer;box-shadow:var(--sombra-sm)}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:var(--sombra-sm)}
+.demo-tag{background:var(--violeta-osc);color:#fff;font-size:.62rem;font-weight:800;letter-spacing:1.5px;padding:5px 11px;border-radius:50px}
+.content{padding:26px 34px 70px}
+
+.view{display:none;animation:fade .3s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+
+.muted{color:var(--suave)}
+.card{background:var(--panel);border-radius:var(--r);padding:22px;box-shadow:var(--sombra);border:1px solid rgba(237,235,246,.7)}
+.card.lift{transition:.2s}.card.lift:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(60,40,120,.13)}
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:18px;margin-bottom:22px}
+.kpi{position:relative;overflow:hidden}
+.kpi .ic{width:42px;height:42px;border-radius:13px;background:var(--rosa-cl);color:var(--rosa);display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:14px}
+.kpi.v2 .ic{background:#EEE9FF;color:var(--violeta)}
+.kpi.v3 .ic{background:var(--verde-bg);color:var(--verde)}
+.kpi.v4 .ic{background:var(--amar-bg);color:var(--amar)}
+.kpi .lbl{font-size:.82rem;color:var(--suave);font-weight:500}
+.kpi .val{font-size:2rem;font-weight:800;margin:3px 0 4px;letter-spacing:-.5px}
+.kpi .delta{font-size:.76rem;color:var(--verde);font-weight:700}
+.spark{display:flex;align-items:flex-end;gap:3px;height:30px;margin-top:10px}
+.spark i{flex:1;background:var(--grad-soft);border-radius:3px;opacity:.85}
+
+/* chart */
+.bars{display:flex;align-items:flex-end;gap:16px;height:170px;margin-top:18px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:9px;height:100%}
+.bar .fill{width:60%;background:var(--grad);border-radius:8px 8px 4px 4px;margin-top:auto;transition:.5s}
+.bar small{color:var(--suave);font-size:.74rem;font-weight:600}
+
+/* feed */
+.feed .item{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--linea);font-size:.9rem}
+.feed .item:last-child{border:0;padding-bottom:0}
+.feed .av{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.tag{font-size:.64rem;font-weight:800;padding:3px 9px;border-radius:50px;letter-spacing:.3px;white-space:nowrap}
+.tag.ia{background:#EEE9FF;color:var(--violeta)}
+.tag.auto{background:var(--verde-bg);color:var(--verde)}
+.tag.hum{background:var(--amar-bg);color:#9a6a04}
+.tag.wa{background:var(--verde-bg);color:#0f9d57}.tag.ig{background:var(--rosa-cl);color:#C13584}.tag.fb{background:var(--azul-bg);color:#1877F2}
+
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+.fstep{display:flex;align-items:center;gap:12px}
+.fbar{height:38px;border-radius:11px;display:flex;align-items:center;padding:0 14px;color:#fff;font-weight:700;font-size:.85rem;background:var(--grad);box-shadow:var(--sombra-sm)}
+.fstep .fn{font-size:.82rem;color:var(--suave);font-weight:600;width:120px;text-align:right}
+
+/* chat */
+.chanfilter{display:flex;gap:9px;margin-bottom:15px;flex-wrap:wrap}
+.chip-f{border:1px solid var(--linea);background:#fff;border-radius:50px;padding:8px 15px;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;color:var(--suave);box-shadow:var(--sombra-sm)}
+.chip-f.active{background:var(--grad);color:#fff;border-color:transparent}
+.cdot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.cdot.wa{background:#25D366}.cdot.ig{background:#C13584}.cdot.fb{background:#1877F2}.cdot.web{background:#16C0AC}
+.chan{font-size:.58rem;font-weight:800;padding:2px 8px;border-radius:50px;margin-left:6px;letter-spacing:.4px}
+.chan.wa{background:var(--verde-bg);color:#0f9d57}.chan.ig{background:var(--rosa-cl);color:#C13584}.chan.fb{background:var(--azul-bg);color:#1877F2}.chan.web{background:#E2F7F4;color:#0E8C7E}
+.chatwrap{display:grid;grid-template-columns:300px 1fr;border-radius:var(--r);overflow:hidden;background:#fff;box-shadow:var(--sombra);height:550px;border:1px solid var(--linea)}
+.chatlist{border-right:1px solid var(--linea);overflow-y:auto}
+.chatlist .ch{display:flex;gap:11px;padding:14px;border-bottom:1px solid var(--linea);cursor:pointer;align-items:center}
+.chatlist .ch:hover,.chatlist .ch.sel{background:#FAF8FF}
+.chatlist .ch.sel{box-shadow:inset 3px 0 0 var(--violeta)}
+.pf{width:42px;height:42px;border-radius:50%;background:var(--grad-soft);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.chatlist .nm{font-weight:700;font-size:.88rem}
+.chatlist .pv{font-size:.78rem;color:var(--suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:185px;margin-top:2px}
+.chatlist .dotnew{width:9px;height:9px;border-radius:50%;background:#25D366;margin-left:auto}
+.chatmain{display:flex;flex-direction:column;background:#F7F5FC}
+.chathead{padding:14px 18px;background:#fff;border-bottom:1px solid var(--linea);display:flex;align-items:center;gap:11px}
+.chatbody{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:11px}
+.msg{max-width:74%;padding:10px 14px;border-radius:16px;font-size:.88rem;line-height:1.45}
+.msg.in{background:#fff;align-self:flex-start;border-bottom-left-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.msg.out{background:var(--grad);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
+.msg .who{font-size:.64rem;font-weight:800;margin-bottom:3px;opacity:.9}
+.chatfoot{padding:13px 16px;background:#fff;border-top:1px solid var(--linea);display:flex;gap:10px;align-items:center}
+.chatfoot input{flex:1;border:1px solid var(--linea);border-radius:50px;padding:11px 17px;font-size:.88rem;outline:none;font-family:inherit}
+.handoff{background:var(--amar-bg);color:#9a6a04;font-size:.62rem;font-weight:800;padding:3px 9px;border-radius:50px}
+
+/* agenda */
+.week{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.daycol .dh{text-align:center;font-weight:800;font-size:.82rem;padding:9px;color:var(--violeta-osc)}
+.daycol .dh small{display:block;color:var(--suave);font-weight:500;font-size:.72rem}
+.slot{background:#fff;border-radius:12px;border-left:4px solid var(--violeta);padding:10px;margin-bottom:9px;font-size:.76rem;box-shadow:var(--sombra-sm)}
+.slot.rosa{border-left-color:var(--rosa)}
+.slot.libre{border-left-color:var(--linea);color:var(--suave);text-align:center;font-style:italic;box-shadow:none;background:#FBFAFE}
+.slot b{display:block;font-size:.8rem;margin-bottom:2px}
+.slot .rem{color:var(--verde);font-size:.67rem;font-weight:700;margin-top:5px;display:flex;align-items:center;gap:3px}
+
+/* table */
+table{width:100%;border-collapse:collapse;font-size:.87rem}
+th{text-align:left;color:var(--suave);font-weight:700;font-size:.74rem;text-transform:uppercase;letter-spacing:.5px;padding:11px 12px;border-bottom:1px solid var(--linea)}
+td{padding:13px 12px;border-bottom:1px solid var(--linea)}
+tbody tr:hover td{background:#FAF8FF}
+.pill{font-size:.7rem;font-weight:800;padding:4px 11px;border-radius:50px}
+.pill.act{background:var(--verde-bg);color:#0f9d57}.pill.inact{background:var(--rojo-bg);color:#d63a41}
+.pill.cumple{background:var(--rosa-cl);color:#C13584}.pill.lead{background:var(--azul-bg);color:#1877F2}.pill.riesgo{background:var(--amar-bg);color:#9a6a04}
+.mini-ch{width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;color:#fff;vertical-align:middle;margin-right:6px}
+.mini-ch.wa{background:#25D366}.mini-ch.ig{background:#C13584}.mini-ch.fb{background:#1877F2}.mini-ch.web{background:#16C0AC}.tag.web{background:#E2F7F4;color:#0E8C7E}
+
+/* botones */
+.btn{background:var(--grad);color:#fff;border:0;padding:12px 24px;border-radius:50px;font-weight:700;cursor:pointer;font-size:.9rem;font-family:inherit;transition:.18s;box-shadow:0 8px 20px rgba(109,74,255,.28)}
+.btn:hover{filter:brightness(1.06);transform:translateY(-2px)}
+.btn.ghost{background:#fff;color:var(--violeta);border:1.5px solid #E3DDFB;box-shadow:none}
+
+/* CRM kanban */
+.banner{background:linear-gradient(120deg,#EEE9FF,#FFEAF2);border:1px solid #E6DEFB;border-radius:15px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;font-size:.9rem}
+.banner .b-ic{width:38px;height:38px;border-radius:11px;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.kanban{display:grid;grid-template-columns:repeat(6,minmax(178px,1fr));gap:14px;overflow-x:auto;padding-bottom:8px}
+.kcol{background:#F6F4FC;border-radius:15px;padding:12px}
+.kcol .kh{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:.8rem;margin-bottom:11px;color:var(--violeta-osc)}
+.kcol .kh .cnt{background:#fff;color:var(--suave);font-size:.7rem;padding:2px 9px;border-radius:50px}
+.kcard{background:#fff;border-radius:12px;padding:11px;margin-bottom:10px;box-shadow:var(--sombra-sm);animation:pop .3s;border:1px solid var(--linea)}
+.kcard .knm{font-weight:700;font-size:.84rem;display:flex;align-items:center}
+.kcard .kmeta{font-size:.72rem;color:var(--suave);margin-top:4px}
+.kcard .kval{font-size:.74rem;font-weight:800;color:var(--violeta);margin-top:5px}
+.kcard .kauto{font-size:.62rem;color:var(--verde);font-weight:700;margin-top:6px;display:flex;align-items:center;gap:3px}
+
+/* ads funnel */
+.adfunnel{display:flex;gap:0;align-items:stretch;flex-wrap:wrap}
+.adstep{flex:1;min-width:130px;text-align:center;padding:18px 10px;border-radius:14px;margin:4px;color:#fff;position:relative}
+.adstep .n{font-size:1.7rem;font-weight:800}
+.adstep .l{font-size:.78rem;opacity:.92;font-weight:600}
+.adstep .c{font-size:.68rem;opacity:.8;margin-top:3px}
+.flowchip{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--linea);border-radius:50px;padding:9px 15px;font-size:.82rem;font-weight:600;box-shadow:var(--sombra-sm)}
+.arrow{color:var(--violeta);font-weight:800;margin:0 6px}
+
+/* contenido */
+.calgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.post{background:#fff;border-radius:14px;overflow:hidden;box-shadow:var(--sombra-sm);border:1px solid var(--linea);transition:.2s}
+.post:hover{transform:translateY(-3px);box-shadow:var(--sombra)}
+.post .img{height:108px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:2rem;position:relative}
+.post .st{position:absolute;top:8px;right:8px;font-size:.6rem;font-weight:800;padding:3px 9px;border-radius:50px;background:rgba(255,255,255,.92);color:var(--violeta-osc)}
+.post .cap{padding:11px 12px;font-size:.78rem}
+.post .cap b{font-weight:700}
+.post .eng{font-size:.7rem;color:var(--suave);margin-top:5px;display:flex;gap:10px}
+
+/* toggles */
+.modrow{display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--linea)}
+.modrow:last-child{border:0}
+.modrow .nm{font-weight:700;font-size:.92rem}
+.modrow .ds{font-size:.78rem;color:var(--suave);margin-top:2px}
+.sw{width:48px;height:27px;border-radius:50px;background:var(--verde);position:relative;cursor:pointer;flex-shrink:0;transition:.2s}
+.sw.off{background:#D6D2E6}
+.sw::after{content:"";position:absolute;width:21px;height:21px;border-radius:50%;background:#fff;top:3px;right:3px;transition:.2s;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+.sw.off::after{right:24px}
+.credit-bar{height:11px;background:var(--linea);border-radius:50px;overflow:hidden;margin:9px 0}
+.credit-bar i{display:block;height:100%;background:var(--grad)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.sectlead{font-size:.92rem;color:var(--suave);margin-bottom:18px;font-weight:500;max-width:680px}
+h3.blk{font-size:1rem;font-weight:800;margin-bottom:12px}
+@media(max-width:820px){.grid3{grid-template-columns:1fr}.calgrid{grid-template-columns:1fr 1fr}.week{grid-template-columns:1fr 1fr}}
+#splash{position:fixed;inset:0;z-index:999;background:linear-gradient(135deg,#2E2270,#6D4AFF 55%,#FF5D93);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px}
+#splash.hide{opacity:0;visibility:hidden;transition:.55s}
+#splash .lg{width:104px;height:104px;border-radius:30px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;font-size:3.2rem;font-weight:800;margin-bottom:26px;box-shadow:0 18px 55px rgba(0,0,0,.3)}
+#splash h1{font-size:3.2rem;font-weight:800;letter-spacing:.5px;margin-bottom:12px}
+#splash .desc{font-size:1.15rem;opacity:.92;max-width:540px;margin-bottom:10px;font-weight:500;line-height:1.5}
+#splash .tl{opacity:.7;font-size:.82rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:38px}
+#splash .enter{background:#fff;color:#5B3FCC;border:0;padding:17px 42px;border-radius:50px;font-weight:800;font-size:1.05rem;cursor:pointer;font-family:inherit;box-shadow:0 16px 44px rgba(0,0,0,.3);transition:.2s}
+#splash .enter:hover{transform:translateY(-3px)}
+#splash .nameinput{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:50px;padding:13px 22px;font-size:1rem;font-family:inherit;margin-bottom:16px;text-align:center;outline:none;width:330px;max-width:82%}
+#splash .nameinput::placeholder{color:rgba(255,255,255,.75)}
+#splash .feat{display:flex;gap:24px;margin-top:42px;flex-wrap:wrap;justify-content:center;opacity:.92;font-size:.86rem;font-weight:600}
+#splash .feat span{display:flex;align-items:center;gap:7px}
+.cmt{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--linea)}
+.cmt:last-child{border:0}
+.cthumb{width:44px;height:44px;border-radius:12px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.creply{background:#F6F4FC;border-radius:11px;border-left:3px solid var(--violeta);padding:9px 12px;margin-top:8px;font-size:.84rem}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="lg">B</div>
+  <h1>BellaOS</h1>
+  <div class="desc">El sistema operativo de tu estética: atención, agenda, fidelización y marketing, potenciados con inteligencia artificial.</div>
+  <div class="tl">Powered by ConectaIA</div>
+  <input id="bizname" class="nameinput" placeholder="Nombre de la estética (para personalizar)">
+  <button class="enter" onclick="enterDemo()">Ingresar a la demo →</button>
+  <div class="feat"><span>🤖 Atiende 24/7</span><span>📅 Agenda sola</span><span>💎 Reactiva clientas</span><span>📣 Trae clientas nuevas</span></div>
+</div>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="brand">
+      <div class="dot">B</div>
+      <div><b>BellaOS</b><small>POWERED BY CONECTAIA</small></div>
+    </div>
+    <div class="nav-item active" data-v="inicio"><span class="ic">📊</span> Inicio</div>
+    <div class="nav-sep">Atención</div>
+    <div class="nav-item" data-v="chat"><span class="ic">💬</span> Conversaciones</div>
+    <div class="nav-item" data-v="agenda"><span class="ic">📅</span> Agenda y turnos</div>
+    <div class="nav-sep">Crecimiento</div>
+    <div class="nav-item" data-v="crm"><span class="ic">👥</span> CRM · Embudo</div>
+    <div class="nav-item" data-v="react"><span class="ic">💎</span> Reactivador</div>
+    <div class="nav-item" data-v="ads"><span class="ic">📣</span> Anuncios</div>
+    <div class="nav-item" data-v="cont"><span class="ic">🎨</span> Contenido</div>
+    <div class="nav-sep">Resultados</div>
+    <div class="nav-item" data-v="informe"><span class="ic">📈</span> Informes</div>
+    <div class="nav-item" data-v="roi"><span class="ic">🧮</span> Simulador ROI</div>
+    <div class="nav-sep">Sistema</div>
+    <div class="nav-item" data-v="config"><span class="ic">⚙️</span> Módulos y plan</div>
+    <div class="promo"><b>✨ Todo automático</b><span>La IA atiende, agenda y fideliza por vos, 24/7.</span></div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div><div class="ttl" id="vtitle">Inicio</div><div class="sub" id="vsub">Tu negocio funcionando solo, en tiempo real</div></div>
+      <div class="right">
+        <span class="demo-tag">DEMO</span>
+        <div class="tenant" id="tenant">🏪 Estética Demo ▾</div>
+        <div class="avatar">G</div>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- INICIO -->
+      <section class="view active" id="inicio">
+        <div class="kpis">
+          <div class="card lift kpi"><div class="ic">💬</div><div class="lbl">Mensajes resueltos por IA</div><div class="val">312</div><div class="delta">▲ 87% sin intervención</div><div class="spark"><i style="height:40%"></i><i style="height:55%"></i><i style="height:48%"></i><i style="height:70%"></i><i style="height:62%"></i><i style="height:88%"></i><i style="height:100%"></i></div></div>
+          <div class="card lift kpi v2"><div class="ic">📅</div><div class="lbl">Turnos agendados solos</div><div class="val">48</div><div class="delta">▲ 22% vs. semana previa</div><div class="spark"><i style="height:50%"></i><i style="height:45%"></i><i style="height:60%"></i><i style="height:55%"></i><i style="height:75%"></i><i style="height:82%"></i><i style="height:100%"></i></div></div>
+          <div class="card lift kpi v3"><div class="ic">💎</div><div class="lbl">Clientas reactivadas</div><div class="val">37</div><div class="delta">de la base inactiva</div><div class="spark"><i style="height:20%"></i><i style="height:35%"></i><i style="height:30%"></i><i style="height:55%"></i><i style="height:70%"></i><i style="height:85%"></i><i style="height:100%"></i></div></div>
+          <div class="card lift kpi v4"><div class="ic">💰</div><div class="lbl">Ingresos recuperados</div><div class="val">$925k</div><div class="delta">este mes</div><div class="spark"><i style="height:30%"></i><i style="height:45%"></i><i style="height:50%"></i><i style="height:65%"></i><i style="height:72%"></i><i style="height:90%"></i><i style="height:100%"></i></div></div>
+        </div>
+        <div class="cols">
+          <div class="card">
+            <h3 class="blk">Turnos agendados por la IA</h3>
+            <div class="bars">
+              <div class="bar"><div class="fill" style="height:42%"></div><small>Ene</small></div>
+              <div class="bar"><div class="fill" style="height:55%"></div><small>Feb</small></div>
+              <div class="bar"><div class="fill" style="height:60%"></div><small>Mar</small></div>
+              <div class="bar"><div class="fill" style="height:72%"></div><small>Abr</small></div>
+              <div class="bar"><div class="fill" style="height:85%"></div><small>May</small></div>
+              <div class="bar"><div class="fill" style="height:100%"></div><small>Jun</small></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="blk">Actividad automática <span class="tag auto" style="margin-left:6px">EN VIVO</span></h3>
+            <div class="feed">
+              <div class="item"><div class="av" style="background:#EEE9FF">🤖</div><div style="flex:1">Respondió precio de <b>laminado de cejas</b> y ofreció turno.<div style="margin-top:4px"><span class="tag ig">IG</span> <span class="tag ia">IA</span></div></div></div>
+              <div class="item"><div class="av" style="background:var(--verde-bg)">📅</div><div style="flex:1">Agendó a <b>Carla M.</b> jueves 16:00 + envió seña.<div style="margin-top:4px"><span class="tag wa">WhatsApp</span> <span class="tag auto">Auto</span></div></div></div>
+              <div class="item"><div class="av" style="background:var(--rosa-cl)">💎</div><div style="flex:1"><b>Romina F.</b> volvió tras 5 meses por la campaña.<div style="margin-top:4px"><span class="tag auto">Reactivada</span></div></div></div>
+              <div class="item"><div class="av" style="background:var(--azul-bg)">📣</div><div style="flex:1">Un anuncio trajo <b>3 consultas nuevas</b> al chat.<div style="margin-top:4px"><span class="tag fb">FB</span> <span class="tag auto">Auto</span></div></div></div>
+              <div class="item"><div class="av" style="background:var(--amar-bg)">🙋</div><div style="flex:1">Derivó a la dueña un <b>reclamo</b> que necesita humano.<div style="margin-top:4px"><span class="tag hum">Humano</span></div></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAT -->
+      <section class="view" id="chat">
+        <p class="sectlead">Bandeja unificada: el asistente responde en <b>WhatsApp, Instagram, Facebook y el chat del sitio web</b> desde un solo lugar, con la voz del negocio, 24/7. Resuelve lo simple y deriva lo importante.</p>
+        <div class="chanfilter">
+          <button class="chip-f active" data-f="all">Todos</button>
+          <button class="chip-f" data-f="wa"><span class="cdot wa"></span> WhatsApp</button>
+          <button class="chip-f" data-f="ig"><span class="cdot ig"></span> Instagram</button>
+          <button class="chip-f" data-f="fb"><span class="cdot fb"></span> Facebook</button>
+          <button class="chip-f" data-f="web"><span class="cdot web"></span> Chat web</button>
+        </div>
+        <div class="chatwrap">
+          <div class="chatlist">
+            <div class="ch sel" data-ch="wa" data-chan="WhatsApp"><div class="pf">CM</div><div><div class="nm">Carla Méndez<span class="chan wa">WA</span></div><div class="pv">Perfecto, ¿el jueves a las 16?</div></div><span class="dotnew"></span></div>
+            <div class="ch" data-ch="ig" data-chan="Instagram"><div class="pf" style="background:#C13584">Rs</div><div><div class="nm">Rocío S.<span class="chan ig">IG</span></div><div class="pv">¿Cuánto sale el esmaltado semi?</div></div></div>
+            <div class="ch" data-ch="fb" data-chan="Facebook"><div class="pf" style="background:#1877F2">VL</div><div><div class="nm">Valentina L.<span class="chan fb">FB</span></div><div class="pv">Gracias!! 💕</div></div></div>
+            <div class="ch" data-ch="wa" data-chan="WhatsApp"><div class="pf">MP</div><div><div class="nm">Meli P.<span class="chan wa">WA</span></div><div class="pv">Quiero cancelar el de mañana</div></div></div>
+            <div class="ch" data-ch="ig" data-chan="Instagram"><div class="pf" style="background:#C13584">JF</div><div><div class="nm">Julia F.<span class="chan ig">IG</span></div><div class="pv">Tengo una queja con el último...</div></div><span class="handoff">Humano</span></div>
+            <div class="ch" data-ch="fb" data-chan="Facebook"><div class="pf" style="background:#1877F2">DA</div><div><div class="nm">Daniela A.<span class="chan fb">FB</span></div><div class="pv">Hola, ¿atienden los sábados?</div></div></div>
+            <div class="ch" data-ch="web" data-chan="Chat del sitio web"><div class="pf" style="background:#16C0AC">🌐</div><div><div class="nm">Visitante del sitio<span class="chan web">WEB</span></div><div class="pv">¿Tienen turno para hoy?</div></div><span class="dotnew"></span></div>
+            <div class="ch" data-ch="web" data-chan="Chat del sitio web"><div class="pf" style="background:#16C0AC">🌐</div><div><div class="nm">Visitante del sitio<span class="chan web">WEB</span></div><div class="pv">¿Dónde están ubicados?</div></div></div>
+          </div>
+          <div class="chatmain">
+            <div class="chathead"><div class="pf" style="width:38px;height:38px;font-size:.8rem">CM</div><div><b>Carla Méndez</b><div class="muted" style="font-size:.76rem"><span id="chanlbl">WhatsApp</span> · en línea</div></div></div>
+            <div class="chatbody">
+              <div class="msg in">Hola! Quería saber el precio del lifting de pestañas 😊</div>
+              <div class="msg out"><div class="who">🤖 Asistente IA</div>¡Hola Carla! El lifting de pestañas está $18.000 e incluye nutrición. Dura unos 45 min. ¿Querés que te busque un turno?</div>
+              <div class="msg in">Sí dale, esta semana si se puede</div>
+              <div class="msg out"><div class="who">🤖 Asistente IA</div>Tengo jueves 16:00 o viernes 11:30. ¿Cuál te queda mejor?</div>
+              <div class="msg in">Perfecto, ¿el jueves a las 16?</div>
+              <div class="msg out"><div class="who">🤖 Asistente IA</div>¡Listo! Te reservé el jueves 16:00 💕 Te mando recordatorio el día anterior. Para confirmar, dejá la seña acá: [link de pago]</div>
+            </div>
+            <div class="chatfoot"><input placeholder="El asistente responde solo… (escribí para intervenir)"><button class="btn">Enviar</button></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:20px">
+          <h3 class="blk">Comentarios respondidos por la IA <span class="tag auto" style="margin-left:6px">AUTO</span></h3>
+          <p class="muted" style="font-size:.85rem;margin-bottom:6px">La IA también responde los comentarios de tus publicaciones en Instagram y Facebook, y lleva la charla al privado para cerrar el turno.</p>
+          <div class="cmt"><div class="cthumb">💅</div><div style="flex:1"><div><span class="chan ig">IG</span> <b>sofi.beauty</b> · post "Antes/después": ¿Hacen uñas esculpidas? 😍</div><div class="creply">🤖 <b>Estética Demo:</b> ¡Sí, Sofi! 💕 Te escribimos al privado para coordinar tu turno.</div></div></div>
+          <div class="cmt"><div class="cthumb">✨</div><div style="flex:1"><div><span class="chan fb">FB</span> <b>Marian López</b> · post "Promo facial": Precio? 🙌</div><div class="creply">🤖 <b>Estética Demo:</b> ¡Hola Marian! El facial está $16.000. Te paso disponibilidad por privado 😊</div></div></div>
+          <div class="cmt"><div class="cthumb">🎀</div><div style="flex:1"><div><span class="chan ig">IG</span> <b>caro.rt</b> · reel: Divinas las cejas!! ¿turnos esta semana?</div><div class="creply">🤖 <b>Estética Demo:</b> ¡Gracias Caro! 🥰 Sí, tenemos jueves y viernes. Te escribo al DM para reservar.</div></div></div>
+        </div>
+      </section>
+
+      <!-- AGENDA -->
+      <section class="view" id="agenda">
+        <p class="sectlead">Turnos tomados por el asistente, con recordatorios automáticos 24 h y 2 h antes. Menos ausencias, agenda siempre llena.</p>
+        <div class="card">
+          <div class="week">
+            <div class="daycol"><div class="dh">Lun<small>14</small></div>
+              <div class="slot"><b>09:30 Sofía R.</b>Manos + pies<div class="rem">✓ recordatorio enviado</div></div>
+              <div class="slot rosa"><b>11:00 Ana T.</b>Facial<div class="rem">✓ recordatorio enviado</div></div>
+              <div class="slot libre">libre</div></div>
+            <div class="daycol"><div class="dh">Mar<small>15</small></div>
+              <div class="slot"><b>10:00 Belén G.</b>Depilación<div class="rem">✓ recordatorio enviado</div></div>
+              <div class="slot rosa"><b>15:30 Caro M.</b>Cejas</div></div>
+            <div class="daycol"><div class="dh">Mié<small>16</small></div>
+              <div class="slot rosa"><b>16:00 Carla M.</b>Lifting pestañas<div class="rem">✓ seña pagada</div></div>
+              <div class="slot libre">libre</div></div>
+            <div class="daycol"><div class="dh">Jue<small>17</small></div>
+              <div class="slot"><b>09:00 Lucía P.</b>Color<div class="rem">✓ recordatorio enviado</div></div>
+              <div class="slot"><b>12:00 Nadia V.</b>Manos</div>
+              <div class="slot rosa"><b>17:00 Flor S.</b>Facial</div></div>
+            <div class="daycol"><div class="dh">Vie<small>18</small></div>
+              <div class="slot"><b>11:30 Mica D.</b>Pestañas</div>
+              <div class="slot libre">libre</div></div>
+            <div class="daycol"><div class="dh">Sáb<small>19</small></div>
+              <div class="slot rosa"><b>10:00 Evento</b>Maquillaje fiesta</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CRM -->
+      <section class="view" id="crm">
+        <p class="sectlead">Tu CRM vivo: cada clienta avanza sola por el embudo según lo que hace. No movés nada a mano.</p>
+        <div class="banner"><div class="b-ic">🤖</div><div><b>Movimiento automático:</b> el asistente cambia a cada clienta de etapa según responde, agenda, viene o deja de venir. Vos solo ves el resultado.</div></div>
+        <div class="kanban">
+          <div class="kcol"><div class="kh">Lead nuevo <span class="cnt">3</span></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch fb">f</span>Daniela A.</div><div class="kmeta">Vino de un anuncio · hoy</div><div class="kauto">⚡ creada por la IA</div></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch ig">ig</span>Rocío S.</div><div class="kmeta">Consultó precio · hoy</div><div class="kauto">⚡ respondida por la IA</div></div>
+          </div>
+          <div class="kcol"><div class="kh">En conversación <span class="cnt">5</span></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch wa">wa</span>Meli P.</div><div class="kmeta">Negocia un turno</div><div class="kauto">⚡ atendida por la IA</div></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch ig">ig</span>Flor B.</div><div class="kmeta">Pidió disponibilidad</div><div class="kauto">⚡ atendida por la IA</div></div>
+          </div>
+          <div class="kcol"><div class="kh">Turno agendado <span class="cnt">8</span></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch wa">wa</span>Carla M.</div><div class="kmeta">Jue 16:00 · seña ✓</div><div class="kval">$18.000</div><div class="kauto">⚡ agendada por la IA</div></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch fb">f</span>Lucía P.</div><div class="kmeta">Jue 09:00 · color</div><div class="kval">$32.000</div><div class="kauto">⚡ recordatorio enviado</div></div>
+          </div>
+          <div class="kcol"><div class="kh">Cliente activa <span class="cnt">214</span></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch wa">wa</span>Sofía R.</div><div class="kmeta">14 visitas · fiel</div><div class="kval">$420.000 histórico</div><div class="kauto">⚡ seguimiento activo</div></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch ig">ig</span>Valentina L.</div><div class="kmeta">9 visitas</div><div class="kval">$190.000 histórico</div></div>
+          </div>
+          <div class="kcol"><div class="kh">En riesgo <span class="cnt">46</span></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch wa">wa</span>Micaela D.</div><div class="kmeta">Sin venir hace 3 meses</div><div class="kauto">⚡ la IA le escribirá pronto</div></div>
+          </div>
+          <div class="kcol"><div class="kh">Reactivada <span class="cnt">37</span></div>
+            <div class="kcard"><div class="knm"><span class="mini-ch wa">wa</span>Romina F.</div><div class="kmeta">Volvió tras 5 meses</div><div class="kval">$25.000</div><div class="kauto">⚡ por campaña automática</div></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:20px">
+          <h3 class="blk">Automatizaciones de fidelización <span class="tag auto" style="margin-left:6px">SIEMPRE ACTIVAS</span></h3>
+          <div class="grid3" style="margin-top:6px">
+            <div class="feed" style="flex:1"><div class="item"><div class="av" style="background:#EEE9FF">🔁</div><div style="flex:1"><b>Recompra inteligente</b><div class="muted" style="font-size:.78rem">Reagenda sola según el servicio (depilación cada X, color cada Y)</div></div></div>
+            <div class="item"><div class="av" style="background:var(--rosa-cl)">🎂</div><div style="flex:1"><b>Cumpleaños</b><div class="muted" style="font-size:.78rem">Saludo + promo automática el día del cumple</div></div></div></div>
+            <div class="feed" style="flex:1"><div class="item"><div class="av" style="background:var(--verde-bg)">👯</div><div style="flex:1"><b>Referidos</b><div class="muted" style="font-size:.78rem">"Traé una amiga" con beneficio para ambas</div></div></div>
+            <div class="item"><div class="av" style="background:var(--azul-bg)">⏳</div><div style="flex:1"><b>Lista de espera inteligente</b><div class="muted" style="font-size:.78rem">Si se libera un turno, lo ofrece al instante</div></div></div></div>
+            <div class="feed" style="flex:1"><div class="item"><div class="av" style="background:var(--amar-bg)">⭐</div><div style="flex:1"><b>Reseña post-servicio</b><div class="muted" style="font-size:.78rem">Pide reseña en Google automáticamente</div></div></div>
+            <div class="item"><div class="av" style="background:#F1EFF8">🚫</div><div style="flex:1"><b>Opt-out respetado</b><div class="muted" style="font-size:.78rem">Quien pide no recibir más, queda fuera (legal)</div></div></div></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:20px">
+          <h3 class="blk">Fichas de clientas</h3>
+          <table>
+            <thead><tr><th>Clienta</th><th>Canal</th><th>Etapa (automática)</th><th>Última interacción</th><th>Valor histórico</th><th>Próximo paso de la IA</th></tr></thead>
+            <tbody>
+              <tr><td><b>Sofía Romero</b></td><td><span class="mini-ch wa">wa</span></td><td><span class="pill act">Cliente activa</span></td><td>Hace 6 días</td><td>$420.000</td><td>Recordar próxima visita</td></tr>
+              <tr><td><b>Carla Méndez</b></td><td><span class="mini-ch wa">wa</span></td><td><span class="pill cumple">Cumple 🎂</span></td><td>Hoy</td><td>$54.000</td><td>Saludo + promo de cumpleaños</td></tr>
+              <tr><td><b>Daniela A.</b></td><td><span class="mini-ch fb">f</span></td><td><span class="pill lead">Lead nuevo</span></td><td>Hoy</td><td>—</td><td>Ofrecer primer turno</td></tr>
+              <tr><td><b>Micaela Díaz</b></td><td><span class="mini-ch wa">wa</span></td><td><span class="pill riesgo">En riesgo</span></td><td>Hace 3 meses</td><td>$110.000</td><td>Mensaje de reactivación</td></tr>
+              <tr><td><b>Romina Fernández</b></td><td><span class="mini-ch wa">wa</span></td><td><span class="pill act">Reactivada</span></td><td>Hace 2 días</td><td>$150.000</td><td>Fidelizar con seguimiento</td></tr>
+              <tr><td><b>Julia Paz</b></td><td><span class="mini-ch ig">ig</span></td><td><span class="pill inact">Inactiva</span></td><td>Hace 8 meses</td><td>$275.000</td><td>Incluir en próxima tanda</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REACTIVADOR -->
+      <section class="view" id="react">
+        <p class="sectlead">El sistema detecta clientas que no vuelven y les manda una campaña personalizada para que regresen. Es lo más rentable de BellaOS.</p>
+        <div class="grid3" style="margin-bottom:20px">
+          <div class="card lift"><div class="muted" style="font-size:.85rem;font-weight:600">Clientas inactivas</div><div class="val" style="font-size:2.2rem;font-weight:800">500</div><div class="muted" style="font-size:.8rem">sin volver hace +4 meses</div></div>
+          <div class="card lift"><div class="muted" style="font-size:.85rem;font-weight:600">Ticket promedio</div><div class="val" style="font-size:2.2rem;font-weight:800">$25.000</div><div class="muted" style="font-size:.8rem">por visita</div></div>
+          <div class="card lift"><div class="muted" style="font-size:.85rem;font-weight:600">Oportunidad (8% vuelve)</div><div class="val" style="font-size:2.2rem;font-weight:800;color:var(--rosa)">$1.000.000</div><div class="muted" style="font-size:.8rem">por mes</div></div>
+        </div>
+        <div class="cols">
+          <div class="card">
+            <h3 class="blk">Campaña: "Te extrañamos 💕"</h3>
+            <p class="muted" style="font-size:.85rem;margin-bottom:14px">Se envía por tandas de 100 para no saturar. Mensaje personalizado con nombre y último servicio.</p>
+            <div class="msg in" style="max-width:100%;margin-bottom:16px">Hola Romina! 💕 Hace un tiempo que no te vemos por Estética Demo. Te dejamos <b>20% off</b> esta semana. ¿Te busco un turno? 😊</div>
+            <button class="btn" onclick="document.getElementById('rres').style.display='block'">▶ Lanzar campaña (demo)</button>
+            <div id="rres" style="display:none;margin-top:18px;animation:pop .4s">
+              <div class="grid3">
+                <div><div class="muted" style="font-size:.8rem;font-weight:600">Enviados</div><div style="font-size:1.7rem;font-weight:800">100</div></div>
+                <div><div class="muted" style="font-size:.8rem;font-weight:600">Respondieron</div><div style="font-size:1.7rem;font-weight:800">23</div></div>
+                <div><div class="muted" style="font-size:.8rem;font-weight:600">Agendaron</div><div style="font-size:1.7rem;font-weight:800;color:var(--verde)">9</div></div>
+              </div>
+              <p style="margin-top:14px;color:var(--verde);font-weight:800">+ $225.000 recuperados con esta tanda 🎉</p>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="blk">Segmentos detectados</h3>
+            <div class="feed">
+              <div class="item"><span class="tag" style="background:#EEE9FF;color:var(--violeta)">180</span><div>No vuelven hace 4-6 meses</div></div>
+              <div class="item"><span class="tag" style="background:#EEE9FF;color:var(--violeta)">210</span><div>No vuelven hace 6-12 meses</div></div>
+              <div class="item"><span class="tag" style="background:#EEE9FF;color:var(--violeta)">110</span><div>+1 año sin venir</div></div>
+              <div class="item"><span class="tag ig">34</span><div>Cumplen años este mes 🎂</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADS -->
+      <section class="view" id="ads">
+        <p class="sectlead">Anuncios en Instagram y Facebook que traen clientas nuevas directo al asistente, que las atiende y agenda al instante. Creativos generados con IA.</p>
+        <div class="card" style="margin-bottom:20px">
+          <h3 class="blk">El embudo del anuncio, en números</h3>
+          <div class="adfunnel">
+            <div class="adstep" style="background:var(--grad)"><div class="n">14.2k</div><div class="l">Personas alcanzadas</div></div>
+            <div class="adstep" style="background:linear-gradient(135deg,#7A57FF,#9B6BFF)"><div class="n">820</div><div class="l">Clics al anuncio</div><div class="c">5,8% CTR</div></div>
+            <div class="adstep" style="background:linear-gradient(135deg,#B66BFF,#FF8FB8)"><div class="n">96</div><div class="l">Consultas al chat</div><div class="c">$640 c/u</div></div>
+            <div class="adstep" style="background:var(--rosa)"><div class="n">29</div><div class="l">Turnos cerrados</div><div class="c">por la IA</div></div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="card">
+            <h3 class="blk">Cómo funciona (todo solo)</h3>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:6px">
+              <div class="flowchip"><span>📣</span> La clienta ve el anuncio en IG/FB</div>
+              <div style="text-align:center" class="arrow">↓</div>
+              <div class="flowchip"><span>👆</span> Toca "Enviar mensaje" (click-to-WhatsApp)</div>
+              <div style="text-align:center" class="arrow">↓</div>
+              <div class="flowchip"><span>🤖</span> La IA la atiende, responde y le ofrece turno</div>
+              <div style="text-align:center" class="arrow">↓</div>
+              <div class="flowchip" style="border-color:var(--verde);color:var(--verde)"><span>✅</span> Turno agendado y cargado al CRM</div>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="blk">Anuncio activo</h3>
+            <div class="post" style="margin-top:4px"><div class="img">📣<span class="st">Activo</span></div><div class="cap"><b>"Reservá tu turno en 1 minuto"</b><div class="muted" style="margin-top:5px">Estética Demo · Resistencia</div></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:.84rem">
+              <div><div class="muted" style="font-size:.76rem">Gasto</div><b>$48.000</b></div>
+              <div><div class="muted" style="font-size:.76rem">Costo x consulta</div><b>$640</b></div>
+              <div><div class="muted" style="font-size:.76rem">Retorno estimado</div><b style="color:var(--verde)">7,2x</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:20px">
+          <h3 class="blk">Optimizaciones automáticas de la pauta <span class="tag auto" style="margin-left:6px">IA</span></h3>
+          <div class="grid3" style="margin-top:6px">
+            <div class="feed" style="flex:1"><div class="item"><div class="av" style="background:#EEE9FF">🎯</div><div style="flex:1"><b>Retargeting</b><div class="muted" style="font-size:.78rem">Vuelve a impactar a quienes consultaron y no agendaron</div></div></div></div>
+            <div class="feed" style="flex:1"><div class="item"><div class="av" style="background:var(--rosa-cl)">👥</div><div style="flex:1"><b>Públicos similares</b><div class="muted" style="font-size:.78rem">Busca clientas parecidas a tus mejores, desde el CRM</div></div></div></div>
+            <div class="feed" style="flex:1"><div class="item"><div class="av" style="background:var(--verde-bg)">📐</div><div style="flex:1"><b>Medición turno por turno</b><div class="muted" style="font-size:.78rem">Pixel + Conversions API: sabés qué anuncio trajo cada turno</div></div></div></div>
+            <div class="feed" style="flex:1"><div class="item"><div class="av" style="background:var(--azul-bg)">🎬</div><div style="flex:1"><b>Creativos sugeridos por IA</b><div class="muted" style="font-size:.78rem">Ideas de video UGC que rinden mejor en el rubro</div></div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTENIDO -->
+      <section class="view" id="cont">
+        <p class="sectlead">La IA crea el contenido del mes con la identidad del negocio y lo publica solo. Cero horas de carga creativa para la dueña.</p>
+        <div class="grid3" style="margin-bottom:20px">
+          <div class="card lift"><div class="muted" style="font-size:.85rem;font-weight:600">Posts este mes</div><div class="val" style="font-size:2rem;font-weight:800">12</div><div class="muted" style="font-size:.8rem">generados por IA</div></div>
+          <div class="card lift"><div class="muted" style="font-size:.85rem;font-weight:600">Alcance</div><div class="val" style="font-size:2rem;font-weight:800">23,5k</div><div class="delta">▲ 31%</div></div>
+          <div class="card lift"><div class="muted" style="font-size:.85rem;font-weight:600">Interacciones</div><div class="val" style="font-size:2rem;font-weight:800">1.840</div><div class="delta">▲ likes, guardados, DM</div></div>
+        </div>
+        <div class="card">
+          <h3 class="blk">Calendario de contenido</h3>
+          <div class="calgrid" style="margin-top:6px">
+            <div class="post"><div class="img">💅<span class="st">Publicado</span></div><div class="cap"><b>Tip de uñas</b><div class="eng">❤ 142 · 💬 9</div></div></div>
+            <div class="post"><div class="img">✨<span class="st">Publicado</span></div><div class="cap"><b>Antes / después</b><div class="eng">❤ 230 · 🔖 18</div></div></div>
+            <div class="post"><div class="img">💆<span class="st" style="color:var(--amar)">Programado</span></div><div class="cap"><b>Promo facial</b><div class="muted" style="margin-top:4px;font-size:.7rem">Vie 18:00</div></div></div>
+            <div class="post"><div class="img">🎀<span class="st" style="color:var(--amar)">Programado</span></div><div class="cap"><b>Reel coreo</b><div class="muted" style="margin-top:4px;font-size:.7rem">Dom 11:00</div></div></div>
+            <div class="post"><div class="img">💄<span class="st" style="color:var(--violeta)">Borrador IA</span></div><div class="cap"><b>Maquillaje fiesta</b><div class="muted" style="margin-top:4px;font-size:.7rem">listo para aprobar</div></div></div>
+            <div class="post"><div class="img">🌸<span class="st" style="color:var(--violeta)">Borrador IA</span></div><div class="cap"><b>Testimonio</b><div class="muted" style="margin-top:4px;font-size:.7rem">listo para aprobar</div></div></div>
+            <div class="post"><div class="img">🧖<span class="st" style="color:var(--violeta)">Borrador IA</span></div><div class="cap"><b>Depilación</b><div class="muted" style="margin-top:4px;font-size:.7rem">listo para aprobar</div></div></div>
+            <div class="post"><div class="img">💎<span class="st">Idea</span></div><div class="cap"><b>Sorteo</b><div class="muted" style="margin-top:4px;font-size:.7rem">sugerida por IA</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INFORME -->
+      <section class="view" id="informe">
+        <p class="sectlead">Todo el rendimiento de tu negocio, dentro del sistema. Elegí el período y, si querés, descargá el informe en PDF — sin que nada se mande por WhatsApp.</p>
+        <div style="display:flex;gap:10px;margin-bottom:18px;align-items:center;flex-wrap:wrap">
+          <select style="padding:11px 16px;border-radius:50px;border:1px solid var(--linea);font-family:inherit;font-weight:600;background:#fff;font-size:.88rem">
+            <option>Junio 2026</option><option>Mayo 2026</option><option>Abril 2026</option>
+          </select>
+          <button class="btn ghost">⬇ Descargar PDF</button>
+          <span class="tag auto">Todo dentro del sistema</span>
+        </div>
+        <div class="kpis">
+          <div class="card kpi"><div class="ic">📅</div><div class="lbl">Turnos agendados por IA</div><div class="val">186</div><div class="delta">▲ 19% vs. mayo</div></div>
+          <div class="card kpi v3"><div class="ic">💰</div><div class="lbl">Ingresos generados</div><div class="val">$4,2M</div><div class="delta">atribuidos al sistema</div></div>
+          <div class="card kpi v2"><div class="ic">💎</div><div class="lbl">Clientas recuperadas</div><div class="val">37</div><div class="delta">$925k recuperados</div></div>
+          <div class="card kpi v4"><div class="ic">⏱️</div><div class="lbl">Horas ahorradas</div><div class="val">34 h</div><div class="delta">de WhatsApp manual</div></div>
+        </div>
+        <div class="cols">
+          <div class="card">
+            <h3 class="blk">Ingresos atribuidos al sistema</h3>
+            <div class="bars">
+              <div class="bar"><div class="fill" style="height:38%"></div><small>Ene</small></div>
+              <div class="bar"><div class="fill" style="height:50%"></div><small>Feb</small></div>
+              <div class="bar"><div class="fill" style="height:58%"></div><small>Mar</small></div>
+              <div class="bar"><div class="fill" style="height:74%"></div><small>Abr</small></div>
+              <div class="bar"><div class="fill" style="height:88%"></div><small>May</small></div>
+              <div class="bar"><div class="fill" style="height:100%"></div><small>Jun</small></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="blk">De dónde vinieron los turnos</h3>
+            <div class="feed">
+              <div class="item"><span class="tag wa">WhatsApp</span><div style="flex:1">Atención + agenda automática</div><b>92</b></div>
+              <div class="item"><span class="tag ig">Instagram</span><div style="flex:1">DM y comentarios</div><b>41</b></div>
+              <div class="item"><span class="tag fb">Facebook</span><div style="flex:1">Mensajes y anuncios</div><b>28</b></div>
+              <div class="item"><span class="tag auto">Reactivación</span><div style="flex:1">Campañas a inactivas</div><b>25</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:18px">
+          <h3 class="blk">Reputación online ⭐</h3>
+          <p class="muted" style="font-size:.85rem;margin-bottom:10px">El sistema pide una reseña automáticamente después de cada servicio. Más reseñas = más clientas nuevas por Google, gratis.</p>
+          <div style="display:flex;gap:30px;flex-wrap:wrap;align-items:center">
+            <div><div style="font-size:2rem;font-weight:800">4,9 ★</div><div class="muted" style="font-size:.8rem">calificación Google</div></div>
+            <div><div style="font-size:2rem;font-weight:800;color:var(--verde)">+18</div><div class="muted" style="font-size:.8rem">reseñas nuevas este mes</div></div>
+            <div><div style="font-size:2rem;font-weight:800">86%</div><div class="muted" style="font-size:.8rem">de clientas dejaron reseña</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ROI -->
+      <section class="view" id="roi">
+        <p class="sectlead">Calculá en vivo cuánta plata puede recuperar un negocio. Ideal para mostrarlo en la reunión y cerrar la venta.</p>
+        <div class="cols">
+          <div class="card">
+            <h3 class="blk">Datos del negocio</h3>
+            <label style="font-size:.85rem;font-weight:600">Clientas inactivas: <b id="r_inactout">500</b></label>
+            <input id="r_inact" type="range" min="0" max="2000" step="50" value="500" style="width:100%;margin:8px 0 18px">
+            <label style="font-size:.85rem;font-weight:600">Ticket promedio por visita ($)</label>
+            <input id="r_ticket" type="number" value="25000" style="width:100%;padding:11px 14px;border:1px solid var(--linea);border-radius:12px;font-family:inherit;margin:8px 0 18px">
+            <label style="font-size:.85rem;font-weight:600">% de inactivas que vuelve: <b id="r_pctout">8%</b></label>
+            <input id="r_pct" type="range" min="1" max="25" step="1" value="8" style="width:100%;margin:8px 0 18px">
+            <label style="font-size:.85rem;font-weight:600">Ausencias evitadas por mes: <b id="r_ausout">12</b></label>
+            <input id="r_aus" type="range" min="0" max="60" step="1" value="12" style="width:100%;margin:8px 0 0">
+          </div>
+          <div class="card" style="background:var(--grad);color:#fff">
+            <h3 class="blk" style="color:#fff">Plata recuperable por mes</h3>
+            <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.25)"><span>Reactivación de inactivas</span><b id="o_react">$1.000.000</b></div>
+            <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.25)"><span>Menos ausencias</span><b id="o_aus">$300.000</b></div>
+            <div style="margin-top:18px;text-align:center">
+              <div style="font-size:.9rem;opacity:.9">Total potencial / mes</div>
+              <div id="o_total" style="font-size:2.8rem;font-weight:800;letter-spacing:-1px">$1.300.000</div>
+            </div>
+            <p style="text-align:center;opacity:.92;font-size:.85rem;margin-top:10px">Con un abono desde USD 39/mes, el sistema se paga muchísimas veces.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONFIG -->
+      <section class="view" id="config">
+        <p class="sectlead">Cada negocio activa solo los módulos que necesita. Acá se ve qué está encendido y el consumo del plan.</p>
+        <div class="cols">
+          <div class="card">
+            <h3 class="blk">Módulos del sistema</h3>
+            <div class="modrow"><div><div class="nm">Asistente / Chatbot 24/7</div><div class="ds">WhatsApp + Instagram + Facebook</div></div><div class="sw" onclick="this.classList.toggle('off')"></div></div>
+            <div class="modrow"><div><div class="nm">Agendamiento + recordatorios</div><div class="ds">turnos y avisos automáticos</div></div><div class="sw" onclick="this.classList.toggle('off')"></div></div>
+            <div class="modrow"><div><div class="nm">CRM · embudo automático</div><div class="ds">mueve a cada clienta sola</div></div><div class="sw" onclick="this.classList.toggle('off')"></div></div>
+            <div class="modrow"><div><div class="nm">Reactivador de inactivas</div><div class="ds">campañas a la base dormida</div></div><div class="sw" onclick="this.classList.toggle('off')"></div></div>
+            <div class="modrow"><div><div class="nm">Anuncios (Meta Ads)</div><div class="ds">captación de clientas nuevas</div></div><div class="sw off" onclick="this.classList.toggle('off')"></div></div>
+            <div class="modrow"><div><div class="nm">Generador de contenido</div><div class="ds">posts e imágenes con IA</div></div><div class="sw off" onclick="this.classList.toggle('off')"></div></div>
+            <div class="modrow"><div><div class="nm">Voz IA (premium)</div><div class="ds">mensajes con tu voz clonada</div></div><div class="sw off" onclick="this.classList.toggle('off')"></div></div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:18px;background:var(--grad);color:#fff">
+              <div style="font-size:.82rem;opacity:.9;font-weight:600">Tu plan</div>
+              <p style="font-size:1.4rem;font-weight:800;margin:6px 0 2px">Recepción + Fidelización</p>
+              <p style="font-size:.85rem;opacity:.9">Abono mensual + créditos incluidos</p>
+            </div>
+            <div class="card">
+              <h3 class="blk">Consumo del mes</h3>
+              <p class="muted" style="font-size:.82rem">Mensajes de campaña usados</p>
+              <div class="credit-bar"><i style="width:64%"></i></div>
+              <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600"><span>640 / 1.500 incluidos</span><span class="muted">excedente: $—</span></div>
+              <p class="muted" style="font-size:.76rem;margin-top:12px">Si superás el límite, cada mensaje extra tiene un costo fijo. También se puede contratar por créditos.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const titles={inicio:["Inicio","Tu negocio funcionando solo, en tiempo real"],chat:["Conversaciones","WhatsApp, Instagram y Facebook en un solo lugar"],agenda:["Agenda y turnos","Reservas y recordatorios automáticos"],crm:["CRM · Embudo","Cada clienta se mueve sola por el embudo"],react:["Reactivador","Recuperá clientas dormidas en automático"],ads:["Anuncios","Captación que llega directo al asistente"],cont:["Contenido","La IA crea y publica por vos"],informe:["Informes","Todo el rendimiento, dentro del sistema"],roi:["Simulador ROI","Cuánta plata puede recuperar el negocio"],config:["Módulos y plan","Activá lo que necesitás, pagá por lo que usás"]};
+  document.querySelectorAll('.nav-item').forEach(it=>it.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));it.classList.add('active');
+    const v=it.dataset.v;
+    document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
+    document.getElementById(v).classList.add('active');
+    document.getElementById('vtitle').textContent=titles[v][0];
+    document.getElementById('vsub').textContent=titles[v][1];
+    document.querySelector('.main').scrollTo(0,0);
+  }));
+  document.querySelectorAll('.chatlist .ch').forEach(c=>c.addEventListener('click',()=>{
+    document.querySelectorAll('.chatlist .ch').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');
+    const lbl=document.getElementById('chanlbl'); if(lbl&&c.dataset.chan) lbl.textContent=c.dataset.chan;
+  }));
+  document.querySelectorAll('.chip-f').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.chip-f').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+    const f=b.dataset.f;
+    document.querySelectorAll('.chatlist .ch').forEach(c=>{c.style.display=(f==='all'||c.dataset.ch===f)?'':'none';});
+  }));
+  function enterDemo(){
+    const n=document.getElementById('bizname').value.trim();
+    if(n){document.getElementById('tenant').textContent='🏪 '+n+' ▾';}
+    document.getElementById('splash').classList.add('hide');
+  }
+  function fmtAR(n){return '$'+Math.round(n).toLocaleString('es-AR');}
+  function calcROI(){
+    const inact=+document.getElementById('r_inact').value;
+    const ticket=+document.getElementById('r_ticket').value||0;
+    const pct=+document.getElementById('r_pct').value;
+    const aus=+document.getElementById('r_aus').value;
+    const react=inact*(pct/100)*ticket, ausR=aus*ticket;
+    document.getElementById('r_inactout').textContent=inact;
+    document.getElementById('r_pctout').textContent=pct+'%';
+    document.getElementById('r_ausout').textContent=aus;
+    document.getElementById('o_react').textContent=fmtAR(react);
+    document.getElementById('o_aus').textContent=fmtAR(ausR);
+    document.getElementById('o_total').textContent=fmtAR(react+ausR);
+  }
+  ['r_inact','r_ticket','r_pct','r_aus'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calcROI);});
+  calcROI();
+</script>
+</body>
+</html>

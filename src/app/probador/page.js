@@ -1,0 +1,31 @@
+"use client";
+import { useState, useEffect } from "react";
+export default function Probador() {
+  const [tenants, setTenants] = useState([]); const [tenantId, setTenantId] = useState("");
+  const [chat, setChat] = useState([]); const [text, setText] = useState(""); const [loading, setLoading] = useState(false);
+  useEffect(() => { fetch("/api/tenants").then(r => r.json()).then(d => { setTenants(d.tenants || []); if (d.tenants?.[0]) setTenantId(d.tenants[0].id); }); }, []);
+  async function send(e) {
+    e.preventDefault(); if (!text.trim() || !tenantId) return;
+    const userMsg = text; setText(""); setChat(c => [...c, { rol: "in", texto: userMsg }]); setLoading(true);
+    const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId, message: userMsg }) });
+    const data = await res.json(); setLoading(false);
+    setChat(c => [...c, { rol: "out", texto: data.reply || data.error, intent: data.intent, engine: data.engine }]);
+  }
+  return (
+    <>
+      <h1>Probador del asistente</h1>
+      <p className="lead">Escribí como si fueras una clienta y mirá cómo responde el cerebro.</p>
+      <select className="selw" value={tenantId} onChange={e => { setTenantId(e.target.value); setChat([]); }}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
+      <div className="chatbox">
+        {chat.length === 0 && <p className="muted">Probá: "¿cuánto sale el facial?", "quiero un turno", "¿atienden sábados?"</p>}
+        {chat.map((m, i) => (<div key={i} className={"msg " + (m.rol === "in" ? "in" : "out")}>{m.texto}{m.intent && <div style={{ fontSize: 10, color: "#8E89A6", marginTop: 4 }}>intent: {m.intent} · {m.engine}</div>}</div>))}
+        {loading && <div className="muted" style={{ fontSize: 13 }}>escribiendo…</div>}
+      </div>
+      <form onSubmit={send} className="row">
+        <input style={{ flex: 1, marginTop: 0 }} value={text} onChange={e => setText(e.target.value)} placeholder="Escribí un mensaje…" />
+        <button className="btn">Enviar</button>
+      </form>
+      <p className="muted" style={{ fontSize: 13, marginTop: 12 }}>Sin clave de OpenRouter responde con reglas; al cargar OPENROUTER_API_KEY usa el LLM.</p>
+    </>
+  );
+}
