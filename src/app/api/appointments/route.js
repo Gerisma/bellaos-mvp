@@ -4,12 +4,12 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const tenant_id = searchParams.get("tenant_id");
+    if (!tenant_id) return Response.json({ appointments: [], error: "Falta tenant_id" }, { status: 400 });
     const sb = supabaseAdmin();
-    let q = sb.from("appointments")
+    const { data } = await sb.from("appointments")
       .select("id,inicio,estado,sena_pagada,contact_id,service_id")
+      .eq("tenant_id", tenant_id)
       .order("inicio", { ascending: true });
-    if (tenant_id) q = q.eq("tenant_id", tenant_id);
-    const { data } = await q;
     return Response.json({ appointments: data || [] });
   } catch (e) {
     return Response.json({ appointments: [], error: String(e.message || e) });
