@@ -1,11 +1,11 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { getUsage } from "@/lib/usage";
-import { safeError } from "@/lib/apiError";
+import { errorResponse } from "@/lib/apiError";
 export async function GET(req) {
   try {
     const tenant_id = new URL(req.url).searchParams.get("tenant_id");
     return Response.json(await getUsage(supabaseAdmin(), tenant_id));
-  } catch (e) { return Response.json({ error: safeError(e) }, { status: 500 }); }
+  } catch (e) { return errorResponse(e); }
 }
 export async function POST(req) {
   try {
@@ -14,5 +14,5 @@ export async function POST(req) {
     const val = tope_marketing === "" || tope_marketing == null ? null : Number(tope_marketing);
     await sb.from("tenants").update({ tope_marketing: val }).eq("id", tenant_id);
     return Response.json({ ok: true, uso: await getUsage(sb, tenant_id) });
-  } catch (e) { return Response.json({ ok: false, error: safeError(e) }, { status: 500 }); }
+  } catch (e) { return errorResponse(e, { ok: false }); }
 }

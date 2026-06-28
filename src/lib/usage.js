@@ -17,6 +17,7 @@ export async function incUsage(sb, tenant_id, field, n) {
 export async function getUsage(sb, tenant_id) {
   const periodo = currentPeriod();
   const { data: t } = await sb.from("tenants").select("plan,tope_marketing").eq("id", tenant_id).single();
+  if (!t) { const err = new Error("Tenant no encontrado"); err.status = 404; throw err; }
   const limit = PLAN_LIMITS[t?.plan] || 800;
   const tope = t?.tope_marketing ?? null; // null = sin tope
   const { data: u } = await sb.from("usage_metrics").select("mensajes_marketing,mensajes_utility").eq("tenant_id", tenant_id).eq("periodo", periodo).maybeSingle();

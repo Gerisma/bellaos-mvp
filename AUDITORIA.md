@@ -36,6 +36,8 @@ Los 5 hallazgos Críticos fueron corregidos:
 
 Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos quedan pendientes de remediación.
 
+**Medio — #12 resuelto:** `getUsage` ahora lanza un error explícito (`status: 404`) si el `tenant_id` no existe. Se agregó `errorResponse(e)` en `src/lib/apiError.js` que distingue errores con `status` propio (los expone, ej. "Tenant no encontrado") de errores inesperados (mensaje genérico + log). `/api/usage` y `/api/informes` lo usan, así que un `tenant_id` inválido devuelve 404 en vez de "0/800 usados".
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -110,7 +112,7 @@ Remediación sugerida: agregar rate limiting (por IP o por tenant_id) en middlew
 
 ## Medio
 
-#### 12. `getUsage` puede dividir por límite inválido / NaN si `plan` no está en `PLAN_LIMITS`
+#### 12. [RESUELTO] `getUsage` puede dividir por límite inválido / NaN si `plan` no está en `PLAN_LIMITS`
 **Archivo:** `src/lib/usage.js:20,28`
 Descripción: `const limit = PLAN_LIMITS[t?.plan] || 800;` tiene fallback a 800, lo cual está bien, pero si `t` es `null` (tenant_id inexistente) el resto de la función sigue calculando con `limit=800` y `used=0` en vez de devolver un error explícito; el caller (`/api/usage`, `/api/informes`) no distingue "tenant no encontrado" de "tenant sin uso", devolviendo datos plausibles pero falsos.
 Riesgo/Impacto: UI puede mostrar "0/800 usados" para un tenant_id inválido/inexistente, ocultando errores de integración en vez de mostrar un mensaje claro.
