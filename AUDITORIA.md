@@ -36,6 +36,8 @@ Los 5 hallazgos Críticos fueron corregidos:
 
 Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos quedan pendientes de remediación.
 
+**Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
+
 ## Crítico
 
 #### 1. `/panel` expone contactos de TODOS los tenants (sin filtro tenant_id)
