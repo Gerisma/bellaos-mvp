@@ -9,9 +9,15 @@ export default function Onboarding() {
   const addS = () => setServices([...services, { nombre: "", precio: "", duracion_min: "", recompra_dias: "" }]);
   async function submit(e) {
     e.preventDefault(); setLoading(true); setMsg(null);
-    const res = await fetch("/api/tenants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...f, services }) });
-    const data = await res.json(); setLoading(false);
-    setMsg(data.ok ? { ok: true, text: `¡Negocio creado! Ya podés probarlo en el Probador.` } : { ok: false, text: data.error || "Error" });
+    try {
+      const res = await fetch("/api/tenants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...f, services }) });
+      const data = await res.json();
+      setMsg(data.ok ? { ok: true, text: `¡Negocio creado! Ya podés probarlo en el Probador.` } : { ok: false, text: data.error || "Error" });
+    } catch {
+      setMsg({ ok: false, text: "No se pudo conectar con el servidor. Probá de nuevo." });
+    } finally {
+      setLoading(false);
+    }
   }
   return (
     <>

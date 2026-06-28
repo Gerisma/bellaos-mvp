@@ -5,13 +5,25 @@ export default function Agenda() {
   const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [appts, setAppts] = useState([]); const [contacts, setContacts] = useState([]); const [services, setServices] = useState([]);
   const [form, setForm] = useState({ contact_id: "", service_id: "", inicio: "" }); const [msg, setMsg] = useState(null);
-  useEffect(() => { if (!tenantId) return; load(); fetch(`/api/tenant-data?tenant_id=${tenantId}`).then(r => r.json()).then(d => { setContacts(d.contacts || []); setServices(d.services || []); }); }, [tenantId]);
-  function load() { fetch(`/api/appointments?tenant_id=${tenantId}`).then(r => r.json()).then(d => setAppts(d.appointments || [])); }
+  useEffect(() => {
+    if (!tenantId) return;
+    load();
+    fetch(`/api/tenant-data?tenant_id=${tenantId}`).then(r => r.json()).then(d => { setContacts(d.contacts || []); setServices(d.services || []); })
+      .catch(() => setMsg({ ok: false, text: "No se pudieron cargar clientas/servicios." }));
+  }, [tenantId]);
+  function load() {
+    fetch(`/api/appointments?tenant_id=${tenantId}`).then(r => r.json()).then(d => setAppts(d.appointments || []))
+      .catch(() => setMsg({ ok: false, text: "No se pudieron cargar los turnos." }));
+  }
   async function crear(e) {
     e.preventDefault(); setMsg(null);
-    const res = await fetch("/api/appointments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId, ...form }) });
-    const d = await res.json();
-    if (d.ok) { setMsg({ ok: true, text: "Turno agendado ✓" }); setForm({ contact_id: "", service_id: "", inicio: "" }); load(); } else setMsg({ ok: false, text: d.error });
+    try {
+      const res = await fetch("/api/appointments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId, ...form }) });
+      const d = await res.json();
+      if (d.ok) { setMsg({ ok: true, text: "Turno agendado ✓" }); setForm({ contact_id: "", service_id: "", inicio: "" }); load(); } else setMsg({ ok: false, text: d.error });
+    } catch {
+      setMsg({ ok: false, text: "No se pudo conectar con el servidor." });
+    }
   }
   const nm = id => contacts.find(c => c.id === id)?.nombre || "—";
   const sv = id => services.find(s => s.id === id)?.nombre || "—";

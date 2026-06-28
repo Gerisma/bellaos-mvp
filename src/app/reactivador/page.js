@@ -8,25 +8,35 @@ export default function Reactivador() {
   const [uso, setUso] = useState(null); const [tope, setTope] = useState(""); const [msg, setMsg] = useState(null);
   useEffect(() => { if (tenantId) refresh(); }, [tenantId]);
   function refresh() {
-    fetch(`/api/campaigns?tenant_id=${tenantId}&inactivas=1`).then(r => r.json()).then(d => setInactivas(d.inactivas || []));
-    fetch(`/api/campaigns?tenant_id=${tenantId}`).then(r => r.json()).then(d => setCampaigns(d.campaigns || []));
-    fetch(`/api/usage?tenant_id=${tenantId}`).then(r => r.json()).then(u => { setUso(u); setTope(u.tope ?? ""); });
+    fetch(`/api/campaigns?tenant_id=${tenantId}&inactivas=1`).then(r => r.json()).then(d => setInactivas(d.inactivas || []))
+      .catch(() => setMsg({ ok: false, text: "No se pudieron cargar las inactivas." }));
+    fetch(`/api/campaigns?tenant_id=${tenantId}`).then(r => r.json()).then(d => setCampaigns(d.campaigns || []))
+      .catch(() => setMsg({ ok: false, text: "No se pudieron cargar las campañas." }));
+    fetch(`/api/usage?tenant_id=${tenantId}`).then(r => r.json()).then(u => { setUso(u); setTope(u.tope ?? ""); })
+      .catch(() => setMsg({ ok: false, text: "No se pudo cargar el consumo." }));
   }
   async function crear() {
-    const res = await fetch("/api/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId }) });
-    const d = await res.json(); setMsg(d.ok ? { ok: true, text: `Campaña creada con ${d.total} inactivas.` } : { ok: false, text: d.error }); refresh();
+    try {
+      const res = await fetch("/api/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId }) });
+      const d = await res.json(); setMsg(d.ok ? { ok: true, text: `Campaña creada con ${d.total} inactivas.` } : { ok: false, text: d.error }); refresh();
+    } catch { setMsg({ ok: false, text: "No se pudo conectar con el servidor." }); }
   }
   async function enviar(id) {
-    const res = await fetch("/api/campaigns", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ campaign_id: id, tanda: 100 }) });
-    const d = await res.json();
-    if (d.ok && d.frenado && d.enviados === 0) setMsg({ ok: false, text: "Tope mensual alcanzado: no se enviaron mensajes." });
-    else if (d.ok) setMsg({ ok: true, text: `Tanda enviada: ${d.enviados} mensajes.${d.frenado ? " (se alcanzó el tope)" : ""}` });
-    else setMsg({ ok: false, text: d.error });
-    if (d.uso) setUso(d.uso); refresh();
+    try {
+      const res = await fetch("/api/campaigns", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ campaign_id: id, tanda: 100 }) });
+      const d = await res.json();
+      if (d.ok && d.frenado && d.enviados === 0) setMsg({ ok: false, text: "Tope mensual alcanzado: no se enviaron mensajes." });
+      else if (d.ok) setMsg({ ok: true, text: `Tanda enviada: ${d.enviados} mensajes.${d.frenado ? " (se alcanzó el tope)" : ""}` });
+      else setMsg({ ok: false, text: d.error });
+      if (d.uso) setUso(d.uso); refresh();
+    } catch { setMsg({ ok: false, text: "No se pudo conectar con el servidor." }); }
   }
   async function guardarTope() {
-    const res = await fetch("/api/usage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId, tope_marketing: tope }) });
-    const d = await res.json(); if (d.ok) { setUso(d.uso); setMsg({ ok: true, text: "Tope guardado." }); }
+    try {
+      const res = await fetch("/api/usage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId, tope_marketing: tope }) });
+      const d = await res.json();
+      if (d.ok) { setUso(d.uso); setMsg({ ok: true, text: "Tope guardado." }); } else setMsg({ ok: false, text: d.error });
+    } catch { setMsg({ ok: false, text: "No se pudo conectar con el servidor." }); }
   }
   return (
     <>

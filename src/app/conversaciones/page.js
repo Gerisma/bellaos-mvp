@@ -5,13 +5,22 @@ const CH = { whatsapp: ["WA", "#25D366"], instagram: ["IG", "#C13584"], facebook
 export default function Conversaciones() {
   const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [convs, setConvs] = useState([]); const [sel, setSel] = useState(null); const [msgs, setMsgs] = useState([]);
-  useEffect(() => { if (tenantId) fetch(`/api/conversations?tenant_id=${tenantId}`).then(r => r.json()).then(d => setConvs(d.conversations || [])); }, [tenantId]);
-  useEffect(() => { if (sel) fetch(`/api/conversations?conversation_id=${sel}`).then(r => r.json()).then(d => setMsgs(d.messages || [])); }, [sel]);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    if (!tenantId) return;
+    fetch(`/api/conversations?tenant_id=${tenantId}`).then(r => r.json()).then(d => setConvs(d.conversations || []))
+      .catch(() => setError("No se pudieron cargar las conversaciones."));
+  }, [tenantId]);
+  useEffect(() => {
+    if (!sel) return;
+    fetch(`/api/conversations?conversation_id=${sel}`).then(r => r.json()).then(d => setMsgs(d.messages || []))
+      .catch(() => setError("No se pudieron cargar los mensajes."));
+  }, [sel]);
   return (
     <>
       <h1>Conversaciones</h1>
       <p className="lead">Todo lo que entra por WhatsApp, Instagram, Facebook y web, en un solo lugar.</p>
-      {tenantsError && <p className="err">{tenantsError}</p>}
+      {(tenantsError || error) && <p className="err">{tenantsError || error}</p>}
       <select className="selw" value={tenantId} onChange={e => { setTenantId(e.target.value); setSel(null); setMsgs([]); }}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
       <div className="grid2" style={{ marginTop: 16, gridTemplateColumns: "320px 1fr", alignItems: "start" }}>
         <div className="card" style={{ padding: 0, maxHeight: 480, overflowY: "auto" }}>

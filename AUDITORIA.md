@@ -44,6 +44,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 
 **Medio — #16 resuelto:** se creó `src/hooks/useTenants.js` (carga `/api/tenants`, selecciona el primero, expone `error`) y se refactorizaron las 6 páginas que repetían la lógica (`agenda`, `probador`, `reactivador`, `informes`, `conversaciones`, `panel`) para usarlo. Un cambio futuro en cómo se selecciona el tenant (ej. al agregar Auth) ahora se hace en un solo lugar.
 
+**Medio — #17 resuelto:** se agregó `.catch()`/try-catch con feedback visible (`err`/mensaje en el chat) a todos los `fetch` de `agenda`, `probador`, `reactivador`, `informes`, `conversaciones` y `onboarding` que no lo tenían. `useTenants` ya cubría la carga de tenants. Ahora una caída del servidor o de Supabase muestra un mensaje claro en vez de quedar en loading indefinido o tirar una excepción silenciosa en consola.
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -148,7 +150,7 @@ Descripción: el mismo `useEffect(() => { fetch("/api/tenants")... }, [])` con e
 Riesgo/Impacto: no es un riesgo de seguridad, pero incrementa el costo de mantenimiento — un cambio en la forma de seleccionar tenant (p. ej. al agregar Auth) requiere editar 5 archivos.
 Remediación sugerida: extraer un hook compartido `useTenants()` en `src/lib` o `src/hooks`.
 
-#### 17. Ninguna página de cliente envuelve sus `fetch` en try/catch
+#### 17. [RESUELTO] Ninguna página de cliente envuelve sus `fetch` en try/catch
 **Archivo:** `src/app/agenda/page.js:7-9,12`, `src/app/probador/page.js:6,10`, `src/app/reactivador/page.js:8,11-13,16,20,28`, `src/app/informes/page.js:7-8`, `src/app/conversaciones/page.js:7-9`, `src/app/onboarding/page.js:12`
 Descripción: todas las llamadas `fetch(...).then(r => r.json())...` asumen que la red funciona y que la respuesta siempre es JSON válido con status 200. No hay `.catch()` ni manejo de fallos de red (servidor caído, timeout, JSON inválido).
 Riesgo/Impacto: si el servidor o Supabase están caídos, las páginas quedan en estado de carga indefinido o lanzan una excepción no controlada en la consola sin feedback al usuario, en vez de mostrar un mensaje de error claro.

@@ -6,7 +6,12 @@ const STAGES = { lead_nuevo: "Lead nuevo", en_conversacion: "En conversación", 
 export default function Informes() {
   const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [d, setD] = useState(null);
-  useEffect(() => { if (tenantId) { setD(null); fetch(`/api/informes?tenant_id=${tenantId}`).then(r => r.json()).then(setD); } }, [tenantId]);
+  useEffect(() => {
+    if (!tenantId) return;
+    setD(null);
+    fetch(`/api/informes?tenant_id=${tenantId}`).then(r => r.json()).then(setD)
+      .catch(() => setD({ error: "No se pudo conectar con el servidor." }));
+  }, [tenantId]);
   const max = d ? Math.max(1, ...Object.values(d.embudo || {})) : 1;
   const u = d?.uso;
   return (

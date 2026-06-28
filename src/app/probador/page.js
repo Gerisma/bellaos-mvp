@@ -7,9 +7,15 @@ export default function Probador() {
   async function send(e) {
     e.preventDefault(); if (!text.trim() || !tenantId) return;
     const userMsg = text; setText(""); setChat(c => [...c, { rol: "in", texto: userMsg }]); setLoading(true);
-    const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId, message: userMsg }) });
-    const data = await res.json(); setLoading(false);
-    setChat(c => [...c, { rol: "out", texto: data.reply || data.error, intent: data.intent, engine: data.engine }]);
+    try {
+      const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenant_id: tenantId, message: userMsg }) });
+      const data = await res.json();
+      setChat(c => [...c, { rol: "out", texto: data.reply || data.error, intent: data.intent, engine: data.engine }]);
+    } catch {
+      setChat(c => [...c, { rol: "out", texto: "No se pudo conectar con el servidor." }]);
+    } finally {
+      setLoading(false);
+    }
   }
   return (
     <>
