@@ -32,7 +32,9 @@ Los 5 hallazgos Críticos fueron corregidos:
 
 **Alto — #10 resuelto:** se agregó la columna `tenants.whatsapp_token` (migración aplicada en Supabase y reflejada en `schema.sql`). `sendWhatsApp(to, text, { phoneId, token })` ahora acepta credenciales por tenant con fallback a las env vars globales si el tenant no tiene número propio. El webhook pasa `ctx.tenant.whatsapp_phone_id`/`whatsapp_token`, y el cron de recordatorios hace join con `tenants` para usar las credenciales del negocio correspondiente.
 
-Los hallazgos Altos #11, Medios y Bajos quedan pendientes de remediación.
+**Alto — #11 mitigado:** `src/middleware.js` ahora aplica rate limiting por IP a `/api/webhook/whatsapp` (30/min), `/api/chat` (20/min) y `/api/cron/recordatorios` (6/min) usando un contador en memoria. **Limitación conocida:** el contador vive en memoria de cada instancia de la función serverless, por lo que en Vercel (múltiples instancias concurrentes) el límite real efectivo es más alto que el nominal y se resetea en cada cold start. Para un límite robusto y consistente entre instancias se necesita un store compartido (Upstash Redis / Vercel Edge Config), pendiente como mejora futura.
+
+Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos quedan pendientes de remediación.
 
 ## Crítico
 
@@ -98,7 +100,7 @@ Descripción: el webhook recibe `phoneId` del payload entrante y lo usa correcta
 Riesgo/Impacto: en un modelo multi-tenant real (cada negocio con su propio número de WhatsApp, como sugiere la columna `tenants.whatsapp_phone_id`), todos los envíos de respuesta saldrían desde el mismo número/token, sin importar qué tenant originó la conversación. Esto rompe el aislamiento de canal y la facturación/atribución por negocio en cuanto haya más de un tenant con número propio.
 Remediación sugerida: pasar el `phone_number_id`/token específico del tenant (almacenado o resuelto via `ctx.tenant`) a `sendWhatsApp`, en vez de usar variables de entorno globales.
 
-#### 11. Sin rate limiting en endpoints públicos
+#### 11. [MITIGADO] Sin rate limiting en endpoints públicos
 **Archivo:** `src/app/api/webhook/whatsapp/route.js`, `src/app/api/chat/route.js`, `src/app/api/cron/recordatorios/route.js`
 Descripción: no existe ninguna capa de rate limiting (ni siquiera básica por IP) en ninguna ruta API, particularmente las accesibles sin autenticación.
 Riesgo/Impacto: el webhook de WhatsApp (sin HMAC, ver #3) y `/api/chat` (usado por el Probador, sin tenant validation) quedan abiertos a abuso/flood, generando costos de LLM (OpenRouter) y de WhatsApp Cloud API sin control.
