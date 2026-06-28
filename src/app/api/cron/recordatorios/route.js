@@ -21,18 +21,22 @@ export async function GET(req) {
       for (const a of data || []) {
         const telefono = a.contacts?.telefono;
         if (!telefono) continue;
-        const ok = await sendWhatsApp(telefono, `Recordatorio: tenés un turno el ${new Date(a.inicio).toLocaleString("es-AR")}.`);
+        const ok = await sendWhatsApp(
+          telefono,
+          `Recordatorio: tenés un turno el ${new Date(a.inicio).toLocaleString("es-AR")}.`,
+          { phoneId: a.tenants?.whatsapp_phone_id, token: a.tenants?.whatsapp_token }
+        );
         if (ok) { await sb.from("appointments").update({ [flag]: true }).eq("id", a.id); enviados++; }
       }
       return enviados;
     }
 
     const enviados24 = await enviarYMarcar(
-      sb.from("appointments").select("id,inicio,contacts(telefono)").eq("recordatorio_24h", false).gte("inicio", nowIso).lte("inicio", in24),
+      sb.from("appointments").select("id,inicio,contacts(telefono),tenants(whatsapp_phone_id,whatsapp_token)").eq("recordatorio_24h", false).gte("inicio", nowIso).lte("inicio", in24),
       "recordatorio_24h"
     );
     const enviados2 = await enviarYMarcar(
-      sb.from("appointments").select("id,inicio,contacts(telefono)").eq("recordatorio_2h", false).gte("inicio", nowIso).lte("inicio", in2),
+      sb.from("appointments").select("id,inicio,contacts(telefono),tenants(whatsapp_phone_id,whatsapp_token)").eq("recordatorio_2h", false).gte("inicio", nowIso).lte("inicio", in2),
       "recordatorio_2h"
     );
 

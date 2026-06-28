@@ -8,6 +8,7 @@ create table tenants (
   plan text not null default 'recepcion_ia',
   status text not null default 'trial',
   whatsapp_phone_id text,
+  whatsapp_token text,
   created_at timestamptz default now()
 );
 create table brand_profiles (

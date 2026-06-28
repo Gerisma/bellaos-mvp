@@ -30,7 +30,9 @@ Los 5 hallazgos Críticos fueron corregidos:
 
 **Alto — #9 resuelto:** se creó `src/lib/apiError.js` (`safeError(e)`: loggea el error completo con `console.error` y devuelve un mensaje genérico) y se reemplazó el patrón `String(e.message || e)` en las 13 ocurrencias de las 9 rutas afectadas (`appointments`, `campaigns`, `conversations`, `usage`, `informes`, `chat`, `tenants`, `tenant-data`, `cron/recordatorios`). Ya no se exponen detalles de esquema/Postgres al cliente.
 
-Los hallazgos Altos #10-#11, Medios y Bajos quedan pendientes de remediación.
+**Alto — #10 resuelto:** se agregó la columna `tenants.whatsapp_token` (migración aplicada en Supabase y reflejada en `schema.sql`). `sendWhatsApp(to, text, { phoneId, token })` ahora acepta credenciales por tenant con fallback a las env vars globales si el tenant no tiene número propio. El webhook pasa `ctx.tenant.whatsapp_phone_id`/`whatsapp_token`, y el cron de recordatorios hace join con `tenants` para usar las credenciales del negocio correspondiente.
+
+Los hallazgos Altos #11, Medios y Bajos quedan pendientes de remediación.
 
 ## Crítico
 
@@ -90,7 +92,7 @@ Descripción: el patrón `catch (e) { return Response.json({ error: String(e.mes
 Riesgo/Impacto: puede filtrar detalles de esquema (nombres de columnas/tablas, constraints, tipos) útiles para un atacante en reconocimiento, y en general es mala práctica de seguridad por diseño (no defensa en profundidad).
 Remediación sugerida: loggear el error completo en servidor (`console.error`) y devolver al cliente un mensaje genérico ("Error interno") con un código de referencia, salvo en entornos de desarrollo.
 
-#### 10. `sendWhatsApp` usa un único número de WhatsApp global, no por tenant
+#### 10. [RESUELTO] `sendWhatsApp` usa un único número de WhatsApp global, no por tenant
 **Archivo:** `src/lib/whatsapp.js:3` vs `src/app/api/webhook/whatsapp/route.js:18,22`
 Descripción: el webhook recibe `phoneId` del payload entrante y lo usa correctamente para identificar el tenant (`loadTenantContext({ phoneId })`), pero al responder llama a `sendWhatsApp(from, result.reply)`, que internamente usa `process.env.WHATSAPP_PHONE_ID` y `process.env.WHATSAPP_TOKEN` fijos (una sola cuenta WABA para toda la plataforma).
 Riesgo/Impacto: en un modelo multi-tenant real (cada negocio con su propio número de WhatsApp, como sugiere la columna `tenants.whatsapp_phone_id`), todos los envíos de respuesta saldrían desde el mismo número/token, sin importar qué tenant originó la conversación. Esto rompe el aislamiento de canal y la facturación/atribución por negocio en cuanto haya más de un tenant con número propio.

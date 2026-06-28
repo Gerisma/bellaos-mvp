@@ -45,6 +45,6 @@ export async function POST(req) {
     const intent = classifyIntent(texto);
     result = { intent, reply: ruleBasedReply(intent, texto, { brand: {}, services: [] }) };
   }
-  await sendWhatsApp(from, result.reply);
+  await sendWhatsApp(from, result.reply, { phoneId: ctx?.tenant?.whatsapp_phone_id, token: ctx?.tenant?.whatsapp_token });
   return Response.json({ ok: true, intent: result.intent });
 }
