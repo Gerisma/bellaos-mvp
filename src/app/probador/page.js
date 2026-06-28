@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useTenants } from "@/hooks/useTenants";
 export default function Probador() {
-  const [tenants, setTenants] = useState([]); const [tenantId, setTenantId] = useState("");
+  const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [chat, setChat] = useState([]); const [text, setText] = useState(""); const [loading, setLoading] = useState(false);
-  useEffect(() => { fetch("/api/tenants").then(r => r.json()).then(d => { setTenants(d.tenants || []); if (d.tenants?.[0]) setTenantId(d.tenants[0].id); }); }, []);
   async function send(e) {
     e.preventDefault(); if (!text.trim() || !tenantId) return;
     const userMsg = text; setText(""); setChat(c => [...c, { rol: "in", texto: userMsg }]); setLoading(true);
@@ -15,6 +15,7 @@ export default function Probador() {
     <>
       <h1>Probador del asistente</h1>
       <p className="lead">Escribí como si fueras una clienta y mirá cómo responde el cerebro.</p>
+      {tenantsError && <p className="err">{tenantsError}</p>}
       <select className="selw" value={tenantId} onChange={e => { setTenantId(e.target.value); setChat([]); }}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
       <div className="chatbox">
         {chat.length === 0 && <p className="muted">Probá: "¿cuánto sale el facial?", "quiero un turno", "¿atienden sábados?"</p>}

@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTenants } from "@/hooks/useTenants";
 export default function Agenda() {
-  const [tenants, setTenants] = useState([]); const [tenantId, setTenantId] = useState("");
+  const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [appts, setAppts] = useState([]); const [contacts, setContacts] = useState([]); const [services, setServices] = useState([]);
   const [form, setForm] = useState({ contact_id: "", service_id: "", inicio: "" }); const [msg, setMsg] = useState(null);
-  useEffect(() => { fetch("/api/tenants").then(r => r.json()).then(d => { setTenants(d.tenants || []); if (d.tenants?.[0]) setTenantId(d.tenants[0].id); }); }, []);
   useEffect(() => { if (!tenantId) return; load(); fetch(`/api/tenant-data?tenant_id=${tenantId}`).then(r => r.json()).then(d => { setContacts(d.contacts || []); setServices(d.services || []); }); }, [tenantId]);
   function load() { fetch(`/api/appointments?tenant_id=${tenantId}`).then(r => r.json()).then(d => setAppts(d.appointments || [])); }
   async function crear(e) {
@@ -19,6 +19,7 @@ export default function Agenda() {
     <>
       <h1>Agenda</h1>
       <p className="lead">Turnos del negocio. Cada uno se guarda en la base.</p>
+      {tenantsError && <p className="err">{tenantsError}</p>}
       <select className="selw" value={tenantId} onChange={e => setTenantId(e.target.value)}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
       <form onSubmit={crear} className="card" style={{ display: "grid", gridTemplateColumns: "1.4fr 1.4fr 1.4fr auto", gap: 8, margin: "16px 0", alignItems: "end" }}>
         <label style={{ margin: 0 }}>Clienta<select required value={form.contact_id} onChange={e => setForm({ ...form, contact_id: e.target.value })}><option value="">…</option>{contacts.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></label>

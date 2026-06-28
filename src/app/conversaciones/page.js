@@ -1,16 +1,17 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTenants } from "@/hooks/useTenants";
 const CH = { whatsapp: ["WA", "#25D366"], instagram: ["IG", "#C13584"], facebook: ["FB", "#1877F2"], web: ["WEB", "#16C0AC"] };
 export default function Conversaciones() {
-  const [tenants, setTenants] = useState([]); const [tenantId, setTenantId] = useState("");
+  const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [convs, setConvs] = useState([]); const [sel, setSel] = useState(null); const [msgs, setMsgs] = useState([]);
-  useEffect(() => { fetch("/api/tenants").then(r => r.json()).then(d => { setTenants(d.tenants || []); if (d.tenants?.[0]) setTenantId(d.tenants[0].id); }); }, []);
   useEffect(() => { if (tenantId) fetch(`/api/conversations?tenant_id=${tenantId}`).then(r => r.json()).then(d => setConvs(d.conversations || [])); }, [tenantId]);
   useEffect(() => { if (sel) fetch(`/api/conversations?conversation_id=${sel}`).then(r => r.json()).then(d => setMsgs(d.messages || [])); }, [sel]);
   return (
     <>
       <h1>Conversaciones</h1>
       <p className="lead">Todo lo que entra por WhatsApp, Instagram, Facebook y web, en un solo lugar.</p>
+      {tenantsError && <p className="err">{tenantsError}</p>}
       <select className="selw" value={tenantId} onChange={e => { setTenantId(e.target.value); setSel(null); setMsgs([]); }}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
       <div className="grid2" style={{ marginTop: 16, gridTemplateColumns: "320px 1fr", alignItems: "start" }}>
         <div className="card" style={{ padding: 0, maxHeight: 480, overflowY: "auto" }}>

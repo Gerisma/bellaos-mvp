@@ -42,6 +42,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 
 **Medio — #14 mitigado:** se creó `src/lib/validate.js` (helpers `isUuid`, `isValidDate`, `isNonEmptyString`, sin agregar una librería de esquemas) y se aplicó a los tres ejemplos puntuales señalados en el hallazgo: `POST /api/appointments` (valida `tenant_id`/`contact_id`/`service_id` como UUID e `inicio` como fecha válida, 400 si no), `POST /api/tenants` (rechaza `name` vacío) y `POST /api/usage` (rechaza `tope_marketing` no numérico o negativo). **No es cobertura total**: el resto de rutas POST/PATCH (`campaigns`, `conversations` no aplica por ser GET) sigue sin validación de esquema; se priorizaron los casos con mayor riesgo de datos corruptos.
 
+**Medio — #16 resuelto:** se creó `src/hooks/useTenants.js` (carga `/api/tenants`, selecciona el primero, expone `error`) y se refactorizaron las 6 páginas que repetían la lógica (`agenda`, `probador`, `reactivador`, `informes`, `conversaciones`, `panel`) para usarlo. Un cambio futuro en cómo se selecciona el tenant (ej. al agregar Auth) ahora se hace en un solo lugar.
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -134,13 +136,13 @@ Descripción: no hay capa de validación de esquema (zod, yup, manual) en ningun
 Riesgo/Impacto: inserciones con `null`/tipos incorrectos pueden generar errores 500 poco descriptivos o datos corruptos (ej. `inicio` inválido, `precio` no numérico) en la base. Es bajo para un atacante directo (sin RCE/injection porque se usa el cliente de Supabase con queries parametrizadas), pero medio para robustez del sistema.
 Remediación sugerida: agregar validación mínima (zod) por ruta antes de tocar la base, especialmente para los IDs de tenant.
 
-#### 15. Sin CORS explícito en las rutas API
+#### 15. [SIN ACCIÓN — no es vulnerabilidad] Sin CORS explícito en las rutas API
 **Archivo:** todas las rutas bajo `src/app/api/**` (no se encontró ningún `Access-Control-*` header ni configuración de CORS)
 Descripción: Next.js App Router, por defecto, no agrega CORS permisivo entre orígenes distintos para rutas API; al no configurarse nada explícito, las rutas solo responden same-origin salvo que algo más (proxy, Vercel) lo cambie. No se detectó middleware de CORS.
 Riesgo/Impacto: bajo/medio — no es una vulnerabilidad en sí (de hecho la ausencia de CORS permisivo es lo seguro por defecto), pero vale la pena documentarlo explícitamente, sobre todo de cara a integrar el webhook de WhatsApp (que es server-to-server, no afectado por CORS) y futuros widgets embebibles de chat web (roadmap punto 7), que sí necesitarán CORS configurado a propósito.
 Remediación sugerida: cuando se implemente el canal "chat web" (roadmap 7), definir explícitamente los headers CORS necesarios en esa ruta puntual, no de forma global.
 
-#### 16. Duplicación de lógica de carga de `tenants` y patrón fetch en cada página cliente
+#### 16. [RESUELTO] Duplicación de lógica de carga de `tenants` y patrón fetch en cada página cliente
 **Archivo:** `src/app/agenda/page.js:7`, `src/app/probador/page.js:6`, `src/app/reactivador/page.js:8`, `src/app/informes/page.js:7`, `src/app/conversaciones/page.js:7`
 Descripción: el mismo `useEffect(() => { fetch("/api/tenants")... }, [])` con el mismo manejo de estado se repite, sin extraer, en cinco páginas distintas.
 Riesgo/Impacto: no es un riesgo de seguridad, pero incrementa el costo de mantenimiento — un cambio en la forma de seleccionar tenant (p. ej. al agregar Auth) requiere editar 5 archivos.

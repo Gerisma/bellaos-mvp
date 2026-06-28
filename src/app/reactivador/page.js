@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTenants } from "@/hooks/useTenants";
 const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-AR");
 export default function Reactivador() {
-  const [tenants, setTenants] = useState([]); const [tenantId, setTenantId] = useState("");
+  const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [inactivas, setInactivas] = useState([]); const [campaigns, setCampaigns] = useState([]);
   const [uso, setUso] = useState(null); const [tope, setTope] = useState(""); const [msg, setMsg] = useState(null);
-  useEffect(() => { fetch("/api/tenants").then(r => r.json()).then(d => { setTenants(d.tenants || []); if (d.tenants?.[0]) setTenantId(d.tenants[0].id); }); }, []);
   useEffect(() => { if (tenantId) refresh(); }, [tenantId]);
   function refresh() {
     fetch(`/api/campaigns?tenant_id=${tenantId}&inactivas=1`).then(r => r.json()).then(d => setInactivas(d.inactivas || []));
@@ -32,6 +32,7 @@ export default function Reactivador() {
     <>
       <h1>Reactivador de inactivas</h1>
       <p className="lead">Detecta clientas dormidas y les manda una campaña por tandas, sin pasarte del presupuesto.</p>
+      {tenantsError && <p className="err">{tenantsError}</p>}
       <select className="selw" value={tenantId} onChange={e => setTenantId(e.target.value)}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
 
       {uso && (

@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTenants } from "@/hooks/useTenants";
 const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-AR");
 const STAGES = { lead_nuevo: "Lead nuevo", en_conversacion: "En conversación", turno_agendado: "Turno agendado", activa: "Cliente activa", en_riesgo: "En riesgo", reactivada: "Reactivada", inactiva: "Inactiva" };
 export default function Informes() {
-  const [tenants, setTenants] = useState([]); const [tenantId, setTenantId] = useState(""); const [d, setD] = useState(null);
-  useEffect(() => { fetch("/api/tenants").then(r => r.json()).then(x => { setTenants(x.tenants || []); if (x.tenants?.[0]) setTenantId(x.tenants[0].id); }); }, []);
+  const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
+  const [d, setD] = useState(null);
   useEffect(() => { if (tenantId) { setD(null); fetch(`/api/informes?tenant_id=${tenantId}`).then(r => r.json()).then(setD); } }, [tenantId]);
   const max = d ? Math.max(1, ...Object.values(d.embudo || {})) : 1;
   const u = d?.uso;
@@ -12,6 +13,7 @@ export default function Informes() {
     <>
       <h1>Informes</h1>
       <p className="lead">Todo el rendimiento dentro del sistema. Sin envíos por WhatsApp.</p>
+      {tenantsError && <p className="err">{tenantsError}</p>}
       <select className="selw" value={tenantId} onChange={e => setTenantId(e.target.value)}>{tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
       {!d ? <p className="muted" style={{ marginTop: 20 }}>Cargando…</p> : d.error ? <p className="err">{d.error}</p> : (
         <div style={{ marginTop: 16 }}>
