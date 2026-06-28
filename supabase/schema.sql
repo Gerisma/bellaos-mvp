@@ -81,4 +81,14 @@ alter table campaign_targets enable row level security;
 alter table knowledge_base enable row level security;
 alter table usage_metrics enable row level security;
 create policy tenant_isolation on contacts using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
--- Crear policy equivalente para el resto de tablas con tenant_id.
+create policy tenant_isolation on brand_profiles using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+create policy tenant_isolation on services using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+create policy tenant_isolation on conversations using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+create policy tenant_isolation on messages using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+create policy tenant_isolation on appointments using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+create policy tenant_isolation on campaigns using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+create policy tenant_isolation_ct on campaign_targets using (
+  exists (select 1 from campaigns c where c.id = campaign_targets.campaign_id and c.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)
+);
+create policy tenant_isolation on knowledge_base using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+create policy tenant_isolation on usage_metrics using (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);

@@ -22,7 +22,9 @@ Los 5 hallazgos Críticos fueron corregidos:
 
 **Acción requerida del usuario:** agregar `WHATSAPP_APP_SECRET` y `CRON_SECRET` a `.env.local` (y a las env vars de Vercel al desplegar). Sin esas variables, el webhook y el cron rechazan todas las solicitudes (fail-closed por diseño).
 
-Los hallazgos Altos, Medios y Bajos quedan pendientes de remediación.
+**Alto — #6 resuelto:** se agregaron las policies `tenant_isolation` faltantes en `supabase/schema.sql` (brand_profiles, services, conversations, messages, appointments, campaigns, campaign_targets, knowledge_base, usage_metrics). Al verificar contra la base real (`kcslhhupssvetmbigorl`) se constató que ya estaban aplicadas allí desde una migración previa no reflejada en el archivo — el cambio deja el `schema.sql` consistente con el estado real de la base.
+
+Los hallazgos Altos #7-#11, Medios y Bajos quedan pendientes de remediación.
 
 ## Crítico
 
@@ -58,7 +60,7 @@ Remediación sugerida: antes de marcar el flag, invocar `sendWhatsApp(contacto.t
 
 ## Alto
 
-#### 6. Todas las tablas (salvo `contacts`) tienen RLS activado pero SIN policies
+#### 6. [RESUELTO] Todas las tablas (salvo `contacts`) tienen RLS activado pero SIN policies
 **Archivo:** `supabase/schema.sql:73-84`
 Descripción: `alter table ... enable row level security` se ejecuta para `brand_profiles, services, contacts, conversations, messages, appointments, campaigns, campaign_targets, knowledge_base, usage_metrics`, pero solo se crea una policy (`tenant_isolation on contacts`). El comentario en línea 84 dice "Crear policy equivalente para el resto" — pendiente, nunca implementado.
 Riesgo/Impacto: si en el futuro se usa el cliente `anon`/`authenticated` (por ejemplo al implementar Auth real, paso 2 del roadmap) en vez de `service_role` para alguna de estas tablas, todas las queries fallarían silenciosamente (RLS sin policy = deny-all) o, peor, si se crea una policy mal escrita, podría haber fuga cross-tenant. Hoy el riesgo es mitigado porque solo se usa `service_role`, pero eso traslada el 100% de la responsabilidad de aislamiento al código de aplicación (ver hallazgos relacionados).
