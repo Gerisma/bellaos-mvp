@@ -29,6 +29,7 @@ create table contacts (
   opt_out boolean default false, created_at timestamptz default now()
 );
 create index on contacts(tenant_id, stage);
+alter table contacts add constraint contacts_tenant_telefono_unique unique (tenant_id, telefono);
 create table conversations (
   id uuid primary key default uuid_generate_v4(),
   tenant_id uuid not null references tenants(id) on delete cascade,

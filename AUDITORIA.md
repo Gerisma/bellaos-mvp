@@ -54,6 +54,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 
 **Bajo — #22 mitigado:** `ruleBasedReply` en `src/lib/brain.js` ahora matchea servicios por palabra completa (`\bpalabra\b`, ignorando palabras de ≤2 letras) en vez de `includes` con la primera palabra del nombre, evitando falsos positivos como "Color" matcheando dentro de "colorido". Sigue siendo un matching simple por regex, no tokenización/fuzzy real — mejora completa queda para cuando se trabaje la calidad del motor de reglas.
 
+**Bajo — #23 resuelto:** se agregó `unique(tenant_id, telefono)` en `contacts` (migración aplicada en Supabase, verificado que no había duplicados previos, y reflejada en `schema.sql`). `persistInbound` ahora, si el insert choca contra esa constraint por una carrera entre dos mensajes casi simultáneos, recupera el contacto ya creado por la otra request en vez de fallar o duplicar.
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -196,7 +198,7 @@ Descripción: por ejemplo, el matching de servicio en `ruleBasedReply` (línea 3
 Riesgo/Impacto: bajo, calidad de respuesta del asistente sin LLM, no es un riesgo de seguridad.
 Remediación sugerida: mejorar el matching (tokenización, fuzzy match) cuando se trabaje en la calidad del motor de reglas.
 
-#### 23. Falta de índices/constraints únicos para evitar duplicados de contacto por teléfono+tenant
+#### 23. [RESUELTO] Falta de índices/constraints únicos para evitar duplicados de contacto por teléfono+tenant
 **Archivo:** `supabase/schema.sql:23-29` (tabla `contacts`)
 Descripción: no hay un `unique(tenant_id, telefono)`; `persistInbound` (`src/lib/conversations.js:3-7`) depende de hacer `select.maybeSingle()` antes de insertar, lo que es una condición de carrera (race condition) si llegan dos mensajes casi simultáneos del mismo número (poco probable pero posible con reintentos de Meta).
 Riesgo/Impacto: bajo — podría crear contactos duplicados para el mismo teléfono bajo carga/reintento.

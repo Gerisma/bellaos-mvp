@@ -2,8 +2,16 @@
 export async function persistInbound(sb, { tenant_id, phone, canal, texto, intent }) {
   let { data: contact } = await sb.from("contacts").select("id").eq("tenant_id", tenant_id).eq("telefono", phone).maybeSingle();
   if (!contact) {
-    const { data } = await sb.from("contacts").insert({ tenant_id, telefono: phone, canal, nombre: phone, stage: "en_conversacion" }).select("id").single();
-    contact = data;
+    // insert directo; si dos mensajes casi simultáneos del mismo teléfono chocan contra el
+    // unique(tenant_id, telefono) (reintentos de Meta), se recupera el contacto ya creado
+    // por la otra request en vez de duplicarlo.
+    const { data, error } = await sb.from("contacts").insert({ tenant_id, telefono: phone, canal, nombre: phone, stage: "en_conversacion" }).select("id").single();
+    if (error) {
+      const { data: existing } = await sb.from("contacts").select("id").eq("tenant_id", tenant_id).eq("telefono", phone).single();
+      contact = existing;
+    } else {
+      contact = data;
+    }
   }
   let { data: conv } = await sb.from("conversations").select("id").eq("tenant_id", tenant_id).eq("contact_id", contact.id).eq("estado", "abierta").maybeSingle();
   if (!conv) {
