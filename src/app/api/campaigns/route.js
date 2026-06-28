@@ -62,7 +62,9 @@ export async function PATCH(req) {
     if (enviados) await incUsage(sb, camp.tenant_id, "mensajes_marketing", enviados);
     await sb.from("campaigns").update({ estado: "enviando" }).eq("id", campaign_id);
     uso = await getUsage(sb, camp.tenant_id);
-    const frenado = uso.tope != null && (uso.used >= uso.tope) && (targets?.length || 0) >= permitido;
+    const { count: pendientes } = await sb.from("campaign_targets")
+      .select("id", { count: "exact", head: true }).eq("campaign_id", campaign_id).eq("estado", "pendiente");
+    const frenado = uso.tope != null && uso.used >= uso.tope && (pendientes || 0) > 0;
     return Response.json({ ok: true, enviados, frenado, uso });
   } catch (e) { return Response.json({ ok: false, error: safeError(e) }, { status: 500 }); }
 }

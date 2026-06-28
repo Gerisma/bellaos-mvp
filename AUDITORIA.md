@@ -38,6 +38,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 
 **Medio — #12 resuelto:** `getUsage` ahora lanza un error explícito (`status: 404`) si el `tenant_id` no existe. Se agregó `errorResponse(e)` en `src/lib/apiError.js` que distingue errores con `status` propio (los expone, ej. "Tenant no encontrado") de errores inesperados (mensaje genérico + log). `/api/usage` y `/api/informes` lo usan, así que un `tenant_id` inválido devuelve 404 en vez de "0/800 usados".
 
+**Medio — #13 resuelto:** `/api/campaigns` PATCH ahora hace un `count` real de `campaign_targets` con `estado=pendiente` después de enviar la tanda, y solo reporta `frenado: true` si efectivamente quedan pendientes Y se alcanzó el tope — ya no infiere por longitud del batch.
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -118,7 +120,7 @@ Descripción: `const limit = PLAN_LIMITS[t?.plan] || 800;` tiene fallback a 800,
 Riesgo/Impacto: UI puede mostrar "0/800 usados" para un tenant_id inválido/inexistente, ocultando errores de integración en vez de mostrar un mensaje claro.
 Remediación sugerida: en `getUsage`, si `!t`, lanzar/devolver un error explícito que la ruta pueda traducir en 404.
 
-#### 13. `/api/campaigns` PATCH: condición `frenado` revisa `targets.length >= permitido`, no si quedan pendientes reales
+#### 13. [RESUELTO] `/api/campaigns` PATCH: condición `frenado` revisa `targets.length >= permitido`, no si quedan pendientes reales
 **Archivo:** `src/app/api/campaigns/route.js:64`
 Descripción: `const frenado = uso.tope != null && (uso.used >= uso.tope) && (targets?.length || 0) >= permitido;` — esta lógica intenta inferir si "se cortó por tope" comparando cuántos se trajeron vs. cuántos se permitían, pero no verifica si realmente quedan más `campaign_targets` pendientes después de esta tanda. Si `targets.length === permitido` simplemente porque esa era exactamente la cantidad de pendientes restantes (sin que el tope haya sido la causa), igual reporta `frenado: true` cuando el tope sí se alcanzó pero la campaña en realidad ya terminó.
 Riesgo/Impacto: mensaje confuso en la UI del Reactivador ("se alcanzó el tope") cuando en realidad la campaña simplemente se completó. Es un bug de UX/reporting, no de seguridad.
