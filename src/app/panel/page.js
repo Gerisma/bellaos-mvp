@@ -8,10 +8,12 @@ const pill = (s) => {
 export default function Panel() {
   const { tenants, tenantId, setTenantId, error: tenantsError } = useTenants();
   const [contacts, setContacts] = useState([]); const [error, setError] = useState(null);
+  const [q, setQ] = useState("");
   useEffect(() => {
     if (!tenantId) return;
     fetch(`/api/tenant-data?tenant_id=${tenantId}`).then(r => r.json()).then(d => { setContacts(d.contacts || []); setError(d.error || null); }).catch(() => setError("No se pudieron cargar los contactos."));
   }, [tenantId]);
+  const visibles = q.trim() ? contacts.filter(c => c.nombre?.toLowerCase().includes(q.trim().toLowerCase())) : contacts;
   return (
     <>
       <h1>Contactos</h1>
@@ -23,12 +25,15 @@ export default function Panel() {
         </select>
       )}
       {(tenantsError || error) && <p className="err">{tenantsError || error}</p>}
+      {contacts.length > 0 && (
+        <input className="selw" style={{ marginTop: 8 }} placeholder="Buscar por nombre…" value={q} onChange={e => setQ(e.target.value)} />
+      )}
       <div className="card">
         <table>
           <thead><tr><th>Clienta</th><th>Canal</th><th>Etapa</th><th>Ticket</th></tr></thead>
           <tbody>
-            {contacts.map((c, i) => (<tr key={c.id || i}><td><b>{c.nombre}</b></td><td style={{ textTransform: "capitalize" }}>{c.canal}</td><td>{pill(c.stage)}</td><td>{c.ticket_prom ? "$" + Number(c.ticket_prom).toLocaleString("es-AR") : "—"}</td></tr>))}
-            {contacts.length === 0 && !error && <tr><td colSpan="4" className="muted">Sin contactos todavía.</td></tr>}
+            {visibles.map((c, i) => (<tr key={c.id || i}><td><b>{c.nombre}</b></td><td style={{ textTransform: "capitalize" }}>{c.canal}</td><td>{pill(c.stage)}</td><td>{c.ticket_prom ? "$" + Number(c.ticket_prom).toLocaleString("es-AR") : "—"}</td></tr>))}
+            {visibles.length === 0 && !error && <tr><td colSpan="4" className="muted">{contacts.length === 0 ? "Sin contactos todavía." : "Sin resultados para esa búsqueda."}</td></tr>}
           </tbody>
         </table>
       </div>

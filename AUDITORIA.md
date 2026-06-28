@@ -46,6 +46,8 @@ Con esto, los 6 hallazgos Altos quedan resueltos o mitigados. Medios y Bajos que
 
 **Medio — #17 resuelto:** se agregó `.catch()`/try-catch con feedback visible (`err`/mensaje en el chat) a todos los `fetch` de `agenda`, `probador`, `reactivador`, `informes`, `conversaciones` y `onboarding` que no lo tenían. `useTenants` ya cubría la carga de tenants. Ahora una caída del servidor o de Supabase muestra un mensaje claro en vez de quedar en loading indefinido o tirar una excepción silenciosa en consola.
 
+**Medio — #18 resuelto:** el `.limit(50)` desapareció al migrar `/panel` a `/api/tenant-data` (fix #1), que no tiene tope — ya no se ocultan contactos silenciosamente. Se agregó además un buscador por nombre client-side para usabilidad con bases grandes; paginación real del lado del servidor queda como mejora futura si la base de contactos crece mucho más.
+
 **Resumen de variables de entorno nuevas requeridas** (agregar a `.env.local` y a Vercel antes de desplegar): `WHATSAPP_APP_SECRET`, `CRON_SECRET`, `APP_BASIC_AUTH_USER`, `APP_BASIC_AUTH_PASS`. Sin las dos primeras, el webhook y el cron quedan inoperantes (fail-closed); sin las dos últimas, la app queda sin gate de acceso (fail-open).
 
 ## Crítico
@@ -156,7 +158,7 @@ Descripción: todas las llamadas `fetch(...).then(r => r.json())...` asumen que 
 Riesgo/Impacto: si el servidor o Supabase están caídos, las páginas quedan en estado de carga indefinido o lanzan una excepción no controlada en la consola sin feedback al usuario, en vez de mostrar un mensaje de error claro.
 Remediación sugerida: envolver los `fetch` en try/catch (o usar una librería como SWR/TanStack Query que maneja esto) y mostrar un estado de error visible.
 
-#### 18. `componente Panel` (`src/app/panel/page.js`) es Server Component sin paginación real
+#### 18. [RESUELTO] `componente Panel` (`src/app/panel/page.js`) es Server Component sin paginación real
 **Archivo:** `src/app/panel/page.js:9`
 Descripción: además del problema de tenant (#1), usa `.limit(50)` fijo sin paginación ni búsqueda; en un negocio con más de 50 contactos, los demás simplemente no se muestran sin ningún indicio en la UI.
 Riesgo/Impacto: bajo impacto funcional hoy (MVP), pero quedará oculto a medida que crezca la base de contactos.
