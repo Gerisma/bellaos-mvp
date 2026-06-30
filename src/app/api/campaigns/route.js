@@ -2,6 +2,8 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { getCurrentTenantId } from "@/lib/auth";
 import { incUsage, getUsage } from "@/lib/usage";
 import { errorResponse } from "@/lib/apiError";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp";
+import { TEMPLATES } from "@/lib/templates";
 
 export async function GET(req) {
   try {
@@ -55,12 +57,25 @@ export async function PATCH(req) {
       return Response.json({ ok: true, enviados: 0, frenado: true, motivo: "Tope mensual alcanzado", uso });
     }
 
+    const { data: tenant } = await sb.from("tenants").select("whatsapp_phone_id,whatsapp_token").eq("id", camp.tenant_id).single();
     const { data: targets } = await sb.from("campaign_targets")
-      .select("id").eq("campaign_id", campaign_id).eq("estado", "pendiente").limit(permitido);
+      .select("id,contacts(telefono,nombre)").eq("campaign_id", campaign_id).eq("estado", "pendiente").limit(permitido);
     let enviados = 0;
     for (const t of targets || []) {
-      await sb.from("campaign_targets").update({ estado: "enviado", enviado_at: new Date().toISOString() }).eq("id", t.id);
-      enviados++;
+      const telefono = t.contacts?.telefono;
+      if (!telefono) continue;
+      // Mensaje de marketing iniciado por el negocio: tiene que ser una plantilla
+      // aprobada (no el texto libre de campaigns.plantilla, que Meta rechazaría).
+      const ok = await sendWhatsAppTemplate(telefono, {
+        phoneId: tenant?.whatsapp_phone_id,
+        token: tenant?.whatsapp_token,
+        template: TEMPLATES.reactivacion,
+        params: [t.contacts?.nombre || ""],
+      });
+      if (ok) {
+        await sb.from("campaign_targets").update({ estado: "enviado", enviado_at: new Date().toISOString() }).eq("id", t.id);
+        enviados++;
+      }
     }
     if (enviados) await incUsage(sb, camp.tenant_id, "mensajes_marketing", enviados);
     await sb.from("campaigns").update({ estado: "enviando" }).eq("id", campaign_id);

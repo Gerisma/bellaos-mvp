@@ -5,9 +5,16 @@ import { sendWhatsApp } from "@/lib/whatsapp";
 import { supabaseAdmin } from "@/lib/supabase";
 import { persistInbound, persistOutbound } from "@/lib/conversations";
 
+function isValidVerifyToken(token) {
+  const expected = process.env.WHATSAPP_VERIFY_TOKEN;
+  if (!expected || !token) return false;
+  const a = Buffer.from(expected); const b = Buffer.from(token);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
-  if (searchParams.get("hub.mode") === "subscribe" && searchParams.get("hub.verify_token") === process.env.WHATSAPP_VERIFY_TOKEN)
+  if (searchParams.get("hub.mode") === "subscribe" && isValidVerifyToken(searchParams.get("hub.verify_token")))
     return new Response(searchParams.get("hub.challenge"), { status: 200 });
   return new Response("forbidden", { status: 403 });
 }

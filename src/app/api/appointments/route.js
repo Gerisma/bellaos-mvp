@@ -2,6 +2,8 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { getCurrentTenantId } from "@/lib/auth";
 import { errorResponse } from "@/lib/apiError";
 import { isUuid, isValidDate } from "@/lib/validate";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp";
+import { TEMPLATES } from "@/lib/templates";
 
 export async function GET() {
   try {
@@ -32,6 +34,24 @@ export async function POST(req) {
     if (error) throw error;
     if (b.contact_id) {
       await sb.from("contacts").update({ stage: "turno_agendado" }).eq("id", b.contact_id);
+      // Confirmación de turno: mensaje iniciado por el negocio (lo agenda el
+      // staff desde /agenda, no necesariamente respondiendo un mensaje
+      // reciente del cliente), así que tiene que ser plantilla aprobada.
+      try {
+        const [{ data: contact }, { data: tenant }, { data: service }] = await Promise.all([
+          sb.from("contacts").select("nombre,telefono").eq("id", b.contact_id).single(),
+          sb.from("tenants").select("whatsapp_phone_id,whatsapp_token").eq("id", tenant_id).single(),
+          b.service_id ? sb.from("services").select("nombre").eq("id", b.service_id).single() : Promise.resolve({ data: null }),
+        ]);
+        if (contact?.telefono) {
+          await sendWhatsAppTemplate(contact.telefono, {
+            phoneId: tenant?.whatsapp_phone_id,
+            token: tenant?.whatsapp_token,
+            template: TEMPLATES.confirmacionTurno,
+            params: [contact.nombre || "", new Date(b.inicio).toLocaleString("es-AR"), service?.nombre || "tu turno"],
+          });
+        }
+      } catch (e) { /* no frenar la creación del turno si falla el envío */ }
     }
     return Response.json({ ok: true, appointment: data });
   } catch (e) {
