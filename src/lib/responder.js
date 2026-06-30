@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "./supabase";
 import { composeSystemPrompt, classifyIntent, ruleBasedReply } from "./brain";
 import { askLLM } from "./llm";
+import { searchFAQs } from "./knowledge";
 
 export async function loadTenantContext({ tenantId, phoneId }) {
   const sb = supabaseAdmin();
@@ -18,13 +19,14 @@ export async function loadTenantContext({ tenantId, phoneId }) {
   return { tenant, brand: { name: tenant.name, ...(bp || {}) }, services: services || [] };
 }
 
-export async function generateReply(ctx, text) {
+export async function generateReply(ctx, text, { sb } = {}) {
   const intent = classifyIntent(text);
   if (intent === "queja") {
     return { intent, reply: ruleBasedReply(intent, text, ctx), handoff: true };
   }
   if (process.env.OPENROUTER_API_KEY) {
-    const sys = composeSystemPrompt(ctx);
+    const faqs = await searchFAQs(sb || supabaseAdmin(), ctx.tenant.id, text);
+    const sys = composeSystemPrompt(ctx, faqs);
     const reply = await askLLM(sys, [{ role: "user", content: text }]);
     return { intent, reply, engine: "llm" };
   }

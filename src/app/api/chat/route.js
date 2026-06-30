@@ -11,7 +11,7 @@ export async function POST(req) {
     const { message } = await req.json();
     const ctx = await loadTenantContext({ tenantId: tenant_id });
     if (!ctx) return Response.json({ error: "Negocio no encontrado" }, { status: 404 });
-    const res = await generateReply(ctx, message || "");
+    const res = await generateReply(ctx, message || "", { sb });
     try {
       // Conversación fija "probador" por tenant, para no mezclar las pruebas con contactos reales.
       const { conversation_id } = await persistInbound(sb, { tenant_id, phone: "probador", canal: "web", texto: message || "", intent: res.intent });

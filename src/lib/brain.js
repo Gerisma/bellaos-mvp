@@ -1,6 +1,6 @@
 import estetica from "../../vertical-packs/estetica.json";
 
-export function composeSystemPrompt({ brand, services }) {
+export function composeSystemPrompt({ brand, services }, faqs = []) {
   let p = estetica.system_prompt
     .replace("{{negocio}}", brand?.name || "el negocio")
     .replace("{{tono}}", brand?.tono || "cercano")
@@ -9,16 +9,22 @@ export function composeSystemPrompt({ brand, services }) {
     .map((s) => `- ${s.nombre}: $${s.precio} (${s.duracion_min} min)`)
     .join("\n");
   p += `\n\nServicios y precios:\n${lista || "(sin servicios cargados)"}`;
+  if (faqs?.length) {
+    p += `\n\nPreguntas frecuentes relevantes (usalas si ayudan a responder, ignoralas si no aplican):\n`
+      + faqs.map((f) => `P: ${f.pregunta}\nR: ${f.respuesta}`).join("\n\n");
+  }
   return p;
 }
 
 export function classifyIntent(text) {
-  const t = (text || "").toLowerCase();
-  if (/(precio|sale|cuesta|cuanto|cuánto|vale)/.test(t)) return "consultar_precio";
-  if (/(turno|reserv|agenda|cita)/.test(t)) return "agendar_turno";
-  if (/(horario|abren|abierto|sabado|sábado|domingo|atienden)/.test(t)) return "consultar_horario";
-  if (/(cancel)/.test(t)) return "cancelar_turno";
-  if (/(queja|reclamo|mal|pesim|horrible)/.test(t)) return "queja";
+  const t = (text || "").toLowerCase().trim();
+  if (/(precio|sale|cuesta|cuanto|cuánto|vale|tarifa|cobran)/.test(t)) return "consultar_precio";
+  if (/(turno|reserv|agend|cita|anotame|anotar)/.test(t)) return "agendar_turno";
+  if (/(horario|abren|cierran|abierto|sabado|sábado|domingo|atienden|que d[ií]a)/.test(t)) return "consultar_horario";
+  if (/(direcci[oó]n|ubicaci[oó]n|d[oó]nde (queda|est[aá]n|est[aá])|c[oó]mo llegar)/.test(t)) return "consultar_direccion";
+  if (/(cancel|anular|no voy a poder|no puedo ir)/.test(t)) return "cancelar_turno";
+  if (/(queja|reclamo|\bmal\b|pesim|horrible|terrible|enojad)/.test(t)) return "queja";
+  if (/^(hola|buenas|buen d[ií]a|buenos d[ií]as|buenas tardes|buenas noches)\b/.test(t)) return "saludo";
   return "otro";
 }
 
@@ -40,10 +46,14 @@ export function ruleBasedReply(intent, text, { brand, services }) {
       return `¡Genial! ¿Para qué servicio y qué día te queda cómodo? Tengo disponibilidad esta semana en ${nombre} 💕`;
     case "consultar_horario":
       return `Nuestro horario es ${brand?.horarios || "de lunes a sábado"}. ¿Querés reservar un turno?`;
+    case "consultar_direccion":
+      return brand?.direccion ? `Estamos en ${brand.direccion}. ¿Te paso cómo llegar? 😊` : `Contame tu zona y te paso la dirección exacta 😊`;
     case "cancelar_turno":
       return `Claro, ¿para qué día tenías el turno? Lo cancelo y te libero el lugar.`;
     case "queja":
       return `Lamento el inconveniente. Ya aviso a una persona del equipo para que te ayude personalmente.`;
+    case "saludo":
+      return `¡Hola! Soy el asistente de ${nombre} 💕 ¿En qué te puedo ayudar hoy?`;
     default:
       return `¡Hola! Soy el asistente de ${nombre} 💕 Puedo darte precios, horarios y agendarte un turno. ¿En qué te ayudo?`;
   }

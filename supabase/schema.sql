@@ -64,8 +64,24 @@ create table campaign_targets (
 create table knowledge_base (
   id uuid primary key default uuid_generate_v4(),
   tenant_id uuid not null references tenants(id) on delete cascade,
-  pregunta text, respuesta text, embedding vector(1536)
+  pregunta text, respuesta text, embedding vector(1536),
+  created_at timestamptz default now()
 );
+create index knowledge_base_embedding_idx on knowledge_base
+  using ivfflat (embedding vector_cosine_ops) with (lists = 100);
+
+-- Búsqueda semántica de FAQs (security invoker: RLS de knowledge_base sigue
+-- aplicando dentro de la función).
+create or replace function match_knowledge_base(
+  p_tenant_id uuid, query_embedding vector(1536), match_count int default 3
+) returns table(id uuid, pregunta text, respuesta text, similarity float)
+language sql stable set search_path = public as $$
+  select id, pregunta, respuesta, 1 - (embedding <=> query_embedding) as similarity
+  from knowledge_base
+  where tenant_id = p_tenant_id and embedding is not null
+  order by embedding <=> query_embedding
+  limit match_count;
+$$;
 create table usage_metrics (
   id uuid primary key default uuid_generate_v4(),
   tenant_id uuid not null references tenants(id) on delete cascade,
