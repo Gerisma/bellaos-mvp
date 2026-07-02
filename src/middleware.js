@@ -29,7 +29,7 @@ function rateLimited(pathname, ip) {
 // Rutas accesibles sin sesión: el webhook y el cron validan su propio
 // secreto (HMAC / CRON_SECRET) y deben seguir siendo accesibles por
 // Meta/Vercel; login/signup son, justamente, cómo se consigue la sesión.
-const PUBLIC_PATHS = ["/login", "/signup", "/api/webhook/whatsapp", "/api/cron/recordatorios"];
+const PUBLIC_PATHS = ["/login", "/signup", "/privacidad", "/api/webhook/whatsapp", "/api/cron/recordatorios"];
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
