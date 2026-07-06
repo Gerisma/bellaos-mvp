@@ -24,6 +24,22 @@ export default function Agenda() {
   }
   const nm = id => contacts.find(c => c.id === id)?.nombre || "—";
   const sv = id => services.find(s => s.id === id)?.nombre || "—";
+  const precio = id => services.find(s => s.id === id)?.precio;
+
+  async function cobrarSena(appt) {
+    const sugerido = precio(appt.service_id);
+    const monto = window.prompt("Monto de la seña (ARS):", sugerido ? Math.round(sugerido * 0.3) : "");
+    if (!monto || Number(monto) <= 0) return;
+    try {
+      const res = await fetch("/api/payments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ appointment_id: appt.id, amount: Number(monto) }) });
+      const d = await res.json();
+      if (d.ok && d.init_point) { window.open(d.init_point, "_blank"); setMsg({ ok: true, text: "Link de pago generado. Se abrió en una pestaña nueva." }); }
+      else setMsg({ ok: false, text: d.error || "No se pudo generar el link de pago." });
+    } catch {
+      setMsg({ ok: false, text: "No se pudo conectar con el servidor." });
+    }
+  }
+
   return (
     <>
       <h1>Agenda</h1>
@@ -37,10 +53,19 @@ export default function Agenda() {
       {msg && <p className={msg.ok ? "ok" : "err"}>{msg.text}</p>}
       <div className="card">
         <table>
-          <thead><tr><th>Cuándo</th><th>Clienta</th><th>Servicio</th><th>Estado</th></tr></thead>
+          <thead><tr><th>Cuándo</th><th>Clienta</th><th>Servicio</th><th>Estado</th><th>Seña</th><th></th></tr></thead>
           <tbody>
-            {appts.map(a => <tr key={a.id}><td>{new Date(a.inicio).toLocaleString("es-AR")}</td><td>{nm(a.contact_id)}</td><td>{sv(a.service_id)}</td><td><span className="pill lead">{a.estado}</span></td></tr>)}
-            {appts.length === 0 && <tr><td colSpan="4" className="muted">Sin turnos todavía.</td></tr>}
+            {appts.map(a => (
+              <tr key={a.id}>
+                <td>{new Date(a.inicio).toLocaleString("es-AR")}</td>
+                <td>{nm(a.contact_id)}</td>
+                <td>{sv(a.service_id)}</td>
+                <td><span className="pill lead">{a.estado}</span></td>
+                <td>{a.sena_pagada ? <span className="pill act">Pagada</span> : <span className="pill inact">Pendiente</span>}</td>
+                <td>{!a.sena_pagada && <button className="btn btn-ghost" style={{ padding: "6px 14px" }} onClick={() => cobrarSena(a)}>Cobrar seña</button>}</td>
+              </tr>
+            ))}
+            {appts.length === 0 && <tr><td colSpan="6" className="muted">Sin turnos todavía.</td></tr>}
           </tbody>
         </table>
       </div>
