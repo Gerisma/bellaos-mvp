@@ -1,3 +1,5 @@
+"use client";
+import ConnectWhatsApp from "@/components/ConnectWhatsApp";
 const tiles = [
   { h: "/probador", ic: "🤖", t: "Probador del asistente", s: "Chateá con el cerebro" },
   { h: "/panel", ic: "👥", t: "Contactos", s: "Clientas en Supabase" },
@@ -10,6 +12,7 @@ export default function Home() {
     <>
       <h1>Hola 👋</h1>
       <p className="lead">Tu negocio funcionando con IA. Elegí una sección para empezar.</p>
+      <div style={{ marginBottom: 20 }}><ConnectWhatsApp /></div>
       <div className="tiles">
         {tiles.map((t) => (
           <a key={t.h} href={t.h} className="tile"><div style={{ fontSize: "1.6rem" }}>{t.ic}</div><b>{t.t}</b><br /><span>{t.s}</span></a>
