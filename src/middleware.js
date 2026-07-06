@@ -7,6 +7,7 @@ import { createServerClient } from "@supabase/ssr";
 // compartido como Upstash/Vercel Edge Config).
 const RATE_LIMITS = {
   "/api/webhook/whatsapp": { max: 30, windowMs: 60_000 },
+  "/api/webhook/mercadopago": { max: 30, windowMs: 60_000 },
   "/api/chat": { max: 20, windowMs: 60_000 },
   "/api/cron/recordatorios": { max: 6, windowMs: 60_000 },
 };
@@ -29,7 +30,7 @@ function rateLimited(pathname, ip) {
 // Rutas accesibles sin sesión: el webhook y el cron validan su propio
 // secreto (HMAC / CRON_SECRET) y deben seguir siendo accesibles por
 // Meta/Vercel; login/signup son, justamente, cómo se consigue la sesión.
-const PUBLIC_PATHS = ["/login", "/signup", "/privacidad", "/api/webhook/whatsapp", "/api/cron/recordatorios"];
+const PUBLIC_PATHS = ["/login", "/signup", "/privacidad", "/terminos"];
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
@@ -39,7 +40,7 @@ export async function middleware(req) {
     return new NextResponse("Demasiadas solicitudes", { status: 429 });
   }
 
-  if (pathname === "/api/webhook/whatsapp" || pathname === "/api/cron/recordatorios") {
+  if (pathname === "/api/webhook/whatsapp" || pathname === "/api/webhook/mercadopago" || pathname === "/api/cron/recordatorios") {
     return NextResponse.next();
   }
 
