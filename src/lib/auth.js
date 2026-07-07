@@ -22,3 +22,16 @@ export async function getCurrentTenantId(sb) {
   }
   return profile.tenant_id;
 }
+
+// Para rutas que ven datos de TODOS los negocios (panel admin de la
+// plataforma, no de un tenant). Nunca confiar en nada mandado por el
+// cliente para esto: se resuelve siempre contra profiles.is_platform_admin.
+export async function assertPlatformAdmin(sb) {
+  const userId = await getCurrentUserId(sb);
+  const { data: profile } = await sb.from("profiles").select("is_platform_admin").eq("id", userId).single();
+  if (!profile?.is_platform_admin) {
+    const e = new Error("No autorizado");
+    e.status = 403;
+    throw e;
+  }
+}
