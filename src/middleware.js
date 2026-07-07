@@ -10,6 +10,7 @@ const RATE_LIMITS = {
   "/api/webhook/mercadopago": { max: 30, windowMs: 60_000 },
   "/api/chat": { max: 20, windowMs: 60_000 },
   "/api/cron/recordatorios": { max: 6, windowMs: 60_000 },
+  "/api/cron/billing": { max: 6, windowMs: 60_000 },
 };
 const buckets = new Map();
 
@@ -40,7 +41,7 @@ export async function middleware(req) {
     return new NextResponse("Demasiadas solicitudes", { status: 429 });
   }
 
-  if (pathname === "/api/webhook/whatsapp" || pathname === "/api/webhook/mercadopago" || pathname === "/api/cron/recordatorios") {
+  if (pathname === "/api/webhook/whatsapp" || pathname === "/api/webhook/mercadopago" || pathname === "/api/cron/recordatorios" || pathname === "/api/cron/billing") {
     return NextResponse.next();
   }
 
@@ -77,10 +78,23 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  if (!pathname.startsWith("/api") && pathname !== "/onboarding") {
+  const exentoDeOnboarding = pathname === "/onboarding" || pathname === "/api/tenants";
+  if (!exentoDeOnboarding) {
     const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
     if (!profile?.tenant_id) {
+      if (pathname.startsWith("/api")) return NextResponse.json({ error: "Todavía no creaste tu negocio" }, { status: 403 });
       return NextResponse.redirect(new URL("/onboarding", req.url));
+    }
+
+    // Prueba de 15 días vencida sin confirmar: se bloquea todo salvo la
+    // pantalla de suscripción y sus propias rutas de facturación.
+    const exentoDeBloqueo = pathname === "/suscripcion" || pathname.startsWith("/api/billing/");
+    if (!exentoDeBloqueo) {
+      const { data: tenant } = await supabase.from("tenants").select("billing_status").eq("id", profile.tenant_id).single();
+      if (tenant?.billing_status === "bloqueado") {
+        if (pathname.startsWith("/api")) return NextResponse.json({ error: "Tu prueba terminó. Confirmá tu suscripción para seguir." }, { status: 402 });
+        return NextResponse.redirect(new URL("/suscripcion", req.url));
+      }
     }
   }
 

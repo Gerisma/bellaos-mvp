@@ -3,6 +3,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { getCurrentUserId } from "@/lib/auth";
 import { errorResponse } from "@/lib/apiError";
 import { isNonEmptyString } from "@/lib/validate";
+import { PLAN_PRECIOS_SUGERIDOS, trialEndsAt } from "@/lib/billing";
 
 // Alta de negocio: crea el tenant y lo asigna al usuario autenticado.
 // Server-side con service_role porque es una operación de setup privilegiada
@@ -20,9 +21,13 @@ export async function POST(req) {
     if (!isNonEmptyString(b.name)) return Response.json({ ok: false, error: "El nombre del negocio es obligatorio" }, { status: 400 });
 
     const sb = supabaseAdmin();
+    const plan = b.plan || "recepcion_ia";
     const { data: tenant, error } = await sb
       .from("tenants")
-      .insert({ name: b.name, plan: b.plan || "recepcion_ia", status: "active", whatsapp_phone_id: b.whatsapp_phone_id || null })
+      .insert({
+        name: b.name, plan, status: "active", whatsapp_phone_id: b.whatsapp_phone_id || null,
+        billing_status: "trial", trial_ends_at: trialEndsAt(), precio_mensual: PLAN_PRECIOS_SUGERIDOS[plan] || PLAN_PRECIOS_SUGERIDOS.recepcion_ia,
+      })
       .select()
       .single();
     if (error) throw error;

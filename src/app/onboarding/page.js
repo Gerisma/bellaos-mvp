@@ -1,29 +1,53 @@
 "use client";
 import { useState } from "react";
+import CardCapture from "@/components/CardCapture";
+
+const MP_ENABLED = !!process.env.NEXT_PUBLIC_MP_PUBLIC_KEY;
+
 export default function Onboarding() {
+  const [step, setStep] = useState("negocio"); // negocio -> tarjeta
   const [f, setF] = useState({ name: "", tono: "cercano", diferencial: "", horarios: "", direccion: "" });
   const [services, setServices] = useState([{ nombre: "", precio: "", duracion_min: "", recompra_dias: "" }]);
   const [msg, setMsg] = useState(null); const [loading, setLoading] = useState(false);
+  const [cardSaved, setCardSaved] = useState(false);
   const upd = (k, v) => setF({ ...f, [k]: v });
   const updS = (i, k, v) => { const n = [...services]; n[i][k] = v; setServices(n); };
   const addS = () => setServices([...services, { nombre: "", precio: "", duracion_min: "", recompra_dias: "" }]);
+
   async function submit(e) {
     e.preventDefault(); setLoading(true); setMsg(null);
     try {
       const res = await fetch("/api/tenants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...f, services }) });
       const data = await res.json();
-      if (data.ok) {
-        setMsg({ ok: true, text: "¡Negocio creado! Te llevamos al panel…" });
-        window.location.href = "/";
-      } else {
-        setMsg({ ok: false, text: data.error || "Error" });
-      }
+      if (data.ok) setStep("tarjeta");
+      else setMsg({ ok: false, text: data.error || "Error" });
     } catch {
       setMsg({ ok: false, text: "No se pudo conectar con el servidor. Probá de nuevo." });
     } finally {
       setLoading(false);
     }
   }
+
+  if (step === "tarjeta") {
+    return (
+      <>
+        <h1>¡Ya casi! Un último paso</h1>
+        <p className="lead">
+          Tenés 15 días de prueba gratis. Cargá tu tarjeta para reservar tu lugar — no se
+          te cobra nada hasta que vos confirmes que querés seguir, pasados los 15 días.
+        </p>
+        <div style={{ maxWidth: 420 }}>
+          <CardCapture onSaved={() => setCardSaved(true)} />
+          {(cardSaved || !MP_ENABLED) && (
+            <button className="btn" style={{ marginTop: 16, width: "100%" }} onClick={() => (window.location.href = "/")}>
+              {cardSaved ? "Listo, ir al panel →" : "Continuar sin tarjeta por ahora →"}
+            </button>
+          )}
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <h1>Alta de negocio</h1>

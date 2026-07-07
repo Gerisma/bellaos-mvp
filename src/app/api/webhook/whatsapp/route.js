@@ -46,6 +46,19 @@ export async function POST(req) {
   const from = msg.from; const texto = msg.text?.body || "";
 
   const ctx = await loadTenantContext({ phoneId });
+
+  // Negocio con la prueba vencida sin confirmar: se guarda el mensaje para
+  // que la dueña lo vea cuando reactive, pero no se le contesta a su
+  // clienta (evita confundirla con algo que es un tema de facturación
+  // interno, ajeno a ella).
+  if (ctx?.tenant?.billing_status === "bloqueado") {
+    try {
+      const sb = supabaseAdmin();
+      await persistInbound(sb, { tenant_id: ctx.tenant.id, phone: from, canal: "whatsapp", texto, intent: null });
+    } catch (e) { console.error("[wh] persistencia fallo (bloqueado):", e?.message); }
+    return Response.json({ ok: true, bloqueado: true });
+  }
+
   let result;
   if (ctx) {
     result = await generateReply(ctx, texto);

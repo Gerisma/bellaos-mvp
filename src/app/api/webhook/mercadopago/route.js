@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { getPayment } from "@/lib/mercadopago";
+import { getPreapproval } from "@/lib/mpSubscription";
 
 // MercadoPago manda la notificación por query params (IPN clásico:
 // ?topic=payment&id=X) o por body JSON (webhooks nuevos: {type,data:{id}}).
@@ -31,12 +32,39 @@ async function resolvePayment(sb, paymentId) {
   return null;
 }
 
+// Suscripciones mensuales de la plataforma: si MercadoPago cancela o pausa
+// una (tarjeta rechazada varias veces, el cliente la cancela desde su
+// cuenta de MP, etc.), el negocio vuelve a quedar bloqueado hasta que
+// confirme de nuevo en /suscripcion.
+function extractPreapprovalId(searchParams, body) {
+  if (searchParams.get("type") === "subscription_preapproval") return searchParams.get("data.id") || searchParams.get("id");
+  if (body?.type === "subscription_preapproval") return body?.data?.id;
+  return null;
+}
+
+async function handlePreapproval(sb, preapprovalId) {
+  const preapproval = await getPreapproval(preapprovalId);
+  if (!preapproval) return;
+  if (["cancelled", "paused"].includes(preapproval.status)) {
+    await sb.from("tenants").update({ billing_status: "bloqueado" }).eq("mp_preapproval_id", String(preapprovalId));
+  } else if (preapproval.status === "authorized") {
+    await sb.from("tenants").update({ billing_status: "activo" }).eq("mp_preapproval_id", String(preapprovalId));
+  }
+}
+
 async function handle(req) {
   const { searchParams } = new URL(req.url);
   let body = null;
   if (req.method === "POST") {
     try { body = await req.json(); } catch { body = null; }
   }
+
+  const preapprovalId = extractPreapprovalId(searchParams, body);
+  if (preapprovalId) {
+    await handlePreapproval(supabaseAdmin(), preapprovalId);
+    return Response.json({ ok: true });
+  }
+
   const paymentId = extractPaymentId(searchParams, body);
   if (!paymentId) return Response.json({ ok: true });
 
