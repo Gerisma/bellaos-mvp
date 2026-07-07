@@ -113,6 +113,7 @@ Nunca las commitees. Viven en Vercel (Settings → Environment Variables) y en t
 | `MP_ACCESS_TOKEN` | Token de MercadoPago de la plataforma (cobro de señas) |
 | `NEXT_PUBLIC_APP_URL` | URL pública de la app (para el link de vuelta de MercadoPago). Opcional: si falta, se usa el origin de la request. |
 | `NEXT_PUBLIC_META_APP_ID` / `NEXT_PUBLIC_META_CONFIG_ID` | Habilitan el botón "Conectar WhatsApp" (Embedded Signup). Sin ellas, el botón muestra "no disponible aún". Requieren que la app de Meta sea **Tech Provider** con un `configuration_id` de Embedded Signup creado. |
+| `NEXT_PUBLIC_MP_PUBLIC_KEY` | Clave **pública** de MercadoPago (Secure Fields, distinta de `MP_ACCESS_TOKEN`). Habilita la captura de tarjeta en el alta y en `/suscripcion`. Sin ella, esos pasos se saltan solos. |
 
 ### Cobro de señas por MercadoPago (implementado esta sesión)
 En `/agenda`, cada turno sin seña paga tiene un botón **"Cobrar seña"**: pide el monto,
@@ -197,7 +198,59 @@ Si devuelve `hola` → el webhook está vivo y el verify token es correcto.
 
 ---
 
-## 10. Estado y hoja de ruta
+## 10. Dominio propio (.com) con Hostinger
+
+BellaOS vive en Vercel; Hostinger solo aloja el **nombre** del dominio y apunta a Vercel.
+
+1. Comprá el dominio en Hostinger (solo el dominio, no hace falta su hosting).
+2. En Vercel → tu proyecto `bellaos-mvp-1` → **Settings → Domains** → agregá el dominio. Vercel te muestra un registro `A` y un `CNAME`.
+3. En Hostinger → **hPanel → Dominios → tu dominio → DNS/Nameservers** → cargá esos mismos registros.
+4. Esperá la propagación (minutos a horas). Vercel emite el HTTPS solo, gratis.
+
+## 11. Prueba de 15 días + suscripción automática
+
+Cada negocio nuevo arranca con **15 días de prueba gratis**. Al crear el negocio en
+`/onboarding` se le pide la tarjeta (guardada de forma segura por MercadoPago —
+BellaOS nunca ve el número real). No se le cobra nada todavía.
+
+- **`tenants.billing_status`**: `trial` (probando) → `bloqueado` (prueba vencida, sin
+  confirmar) → `activo` (suscripción mensual corriendo) → `cortesia` (gratis, nunca se
+  bloquea) → `cancelado`.
+- **Al vencer los 15 días** (cron diario `/api/cron/billing`), si el cliente no confirmó,
+  queda **bloqueado**: no puede usar el panel y el asistente deja de responderle a sus
+  propias clientas (aunque el mensaje entrante se guarda, para que lo vea al reactivar).
+- **El cliente confirma** en `/suscripcion` con un botón "Sí, quiero seguir" (le vuelve a
+  pedir solo el CVV, no la tarjeta completa). Ese clic es el que dispara el **primer
+  cobro** y activa la **suscripción mensual automática** de ahí en adelante (se cobra
+  solo cada mes, con la misma tarjeta, hasta que cancele).
+- **Precio:** `tenants.precio_mensual` (por negocio, editable a mano en Supabase si
+  negociás un precio distinto). Los sugeridos por plan están en `src/lib/billing.js`
+  (`PLAN_PRECIOS_SUGERIDOS`) — ajustalos ahí si tus precios reales son otros.
+- **Requiere** `NEXT_PUBLIC_MP_PUBLIC_KEY` (clave pública de MercadoPago, distinta del
+  `MP_ACCESS_TOKEN`) en Vercel. **Sin ella, el paso de tarjeta se salta solo** (no bloquea
+  el alta de nuevos negocios) — la prueba corre igual, solo que sin captura de tarjeta
+  hasta que la cargues.
+- Antes de ir a producción de verdad: **probar el alta completa con una tarjeta de
+  prueba de MercadoPago** (Secure Fields es una integración de terceros que no se pudo
+  testear en vivo sin credenciales reales).
+
+## 12. Cuentas "cortesía" (gratis) + panel admin
+
+Para dar acceso 100% gratis a alguien pero seguir viendo cuánto "gasta": marcá esa
+cuenta como `tenants.billing_status = 'cortesia'` en Supabase (nunca se bloquea sola).
+
+Entrá a **`/admin`** (solo visible para vos, con tu cuenta marcada como
+`profiles.is_platform_admin = true`) para ver **todos** los negocios de la plataforma:
+su plan, estado, precio y consumo del mes. Con el botón **"Cobrar consumo"** generás un
+link de pago único de MercadoPago para facturarle a mano a quien quieras, cuando quieras.
+
+## 13. Logo personalizado (marca blanca básica)
+
+Cada negocio puede subir su logo en **`/ajustes`** (PNG/JPG/WEBP/SVG, hasta 2MB). Se
+guarda en Supabase Storage (bucket público `logos`) y reemplaza el ícono "B" en su propio
+sidebar. Es por ahora solo visual en el panel — no se propaga a mensajes ni informes.
+
+## 14. Estado y hoja de ruta
 
 El detalle de qué está hecho y qué falta para vender a escala está en el diagnóstico
 que te pasé por chat y en `HANDOFF_CLAUDE_CODE.md`. En una línea: **el producto

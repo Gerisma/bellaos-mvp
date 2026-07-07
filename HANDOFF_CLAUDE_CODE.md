@@ -1,8 +1,52 @@
 # HANDOFF para Claude Code — BellaOS
 
-_Última actualización: 2026-07-06 (sesión 2). Este archivo resume el estado real para retomar el trabajo desde Claude Code._
+_Última actualización: 2026-07-07 (sesión 3). Este archivo resume el estado real para retomar el trabajo desde Claude Code._
 
-## 🆕 Hecho en la sesión 2 (2026-07-06, tarde)
+## 🆕 Hecho en la sesión 3 (2026-07-07)
+
+Sistema de facturación completo: prueba de 15 días con tarjeta, suscripción mensual
+automática, cuentas cortesía con panel admin, y logo personalizado por negocio.
+
+- **Schema** (`supabase/migration_billing_trial.sql`, ya aplicada): `tenants.billing_status`
+  (`trial`/`bloqueado`/`activo`/`cortesia`/`cancelado`), `trial_ends_at`, `mp_customer_id`,
+  `mp_card_id/last4/brand`, `mp_preapproval_id`, `precio_mensual`, `logo_url`;
+  `profiles.is_platform_admin`; bucket público de Storage `logos`. Backfill: los negocios
+  que ya existían quedaron `activo` (no se bloquean retroactivamente).
+- **Alta con tarjeta:** `/onboarding` tiene un paso nuevo ("¡Ya casi!") con
+  `components/CardCapture.js` (MercadoPago Secure Fields — tokeniza en el navegador, el
+  servidor nunca ve el número real). `/api/tenants` arranca cada negocio en
+  `billing_status='trial'` con `trial_ends_at = +15 días` y un `precio_mensual` sugerido
+  (`src/lib/billing.js`). Sin `NEXT_PUBLIC_MP_PUBLIC_KEY`, el paso se salta solo (no
+  bloquea altas nuevas).
+- **Bloqueo al vencer:** cron diario `/api/cron/billing` (agregado a `vercel.json`) pasa
+  `trial`→`bloqueado` cuando `trial_ends_at` venció. El middleware redirige a
+  `/suscripcion` (páginas) o devuelve 402 (API); el webhook de WhatsApp deja de
+  responderle a las clientas del negocio bloqueado (pero guarda el mensaje entrante).
+- **Confirmación y suscripción:** `/suscripcion` + `components/ConfirmCardCVV.js`
+  (re-pide solo el CVV) + `/api/billing/confirm`, que crea el `preapproval` de
+  MercadoPago (`src/lib/mpSubscription.js`) — recién ahí arranca el cobro mensual
+  automático. El webhook de MercadoPago se extendió para escuchar eventos de
+  `subscription_preapproval` (cancelación/pausa → vuelve a `bloqueado`).
+- **Panel admin** (`/admin`, solo si `profiles.is_platform_admin=true`): lista todos los
+  negocios con su consumo (reusa `getUsage`) y un botón "Cobrar consumo" que genera un
+  link de pago único de MercadoPago para facturar a mano las cuentas `cortesia`. Tu
+  cuenta (`info@conectaiapro.com`) ya está marcada como admin.
+- **Logo personalizado:** `/ajustes` (upload) + `/api/settings/logo` (sube a Storage,
+  guarda `logo_url`) + `Shell.js` lo muestra en el sidebar en vez de la "B". Verificado
+  end-to-end (subida real + URL pública accesible).
+- **Verificado en preview**, de punta a punta, con datos de prueba reales creados y
+  luego borrados: alta con salto de tarjeta, `/suscripcion`, bloqueo real (tenant forzado
+  a `bloqueado`: página redirige, API devuelve 402), panel admin con las 3 cuentas
+  reales, subida de logo (con verificación de que la URL pública sirve la imagen).
+- **Pendiente de gestión (no es código):** cargar `NEXT_PUBLIC_MP_PUBLIC_KEY` real y
+  probar el alta completa con una tarjeta de prueba de MercadoPago antes de ir en serio a
+  producción — la integración de Secure Fields no se pudo testear en vivo sin
+  credenciales reales. Ajustar `PLAN_PRECIOS_SUGERIDOS` en `src/lib/billing.js` si los
+  precios reales son otros.
+- **Dominio propio:** se le pasó al dueño la guía paso a paso para conectar un .com
+  comprado en Hostinger al proyecto de Vercel (sección 10 de `manuales/MANUAL_DUENO.md`).
+
+## Hecho en la sesión 2 (2026-07-06, tarde)
 
 Verificación completa del proyecto (build limpio, RLS ok) + avance autónomo hacia poder
 vender sin fricciones, con manuales completos. Resumen:

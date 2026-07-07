@@ -35,6 +35,10 @@ Mandale esta lista al cliente (podés copiar/pegar). Sin estos datos no se puede
 **Preguntas frecuentes** (opcional al inicio, se puede cargar después)
 - [ ] Las 5–10 dudas que más le hacen sus clientas, con la respuesta.
 
+**Para la prueba de 15 días**
+- [ ] Una tarjeta de crédito propia del negocio (no se le cobra nada hasta que confirme,
+      pasados los 15 días).
+
 ---
 
 ## BLOQUE 1 — El cliente crea su cuenta (lo hace la clienta, con tu guía)
@@ -42,6 +46,12 @@ Mandale esta lista al cliente (podés copiar/pegar). Sin estos datos no se puede
 1. El cliente entra a `https://bellaos-mvp-1.vercel.app/signup`.
 2. Crea su usuario con **email + contraseña**.
 3. Queda logueado y la app lo lleva a `/onboarding`.
+
+> Al terminar de cargar el negocio y los servicios, la app le pide la **tarjeta de
+> crédito** (paso "¡Ya casi!"). Es obligatorio para reservar el lugar de la prueba, pero
+> no se le cobra nada hasta que confirme a los 15 días. (Si todavía no cargaste
+> `NEXT_PUBLIC_MP_PUBLIC_KEY` en Vercel, este paso se salta solo con un botón
+> "Continuar sin tarjeta por ahora" — no rompe el alta.)
 
 ---
 
@@ -116,6 +126,7 @@ Este es el único bloque técnico. Es el mismo proceso que hiciste con "Bella Es
 ```
 [ ] Cliente creó usuario en /signup
 [ ] Negocio + servicios cargados en /onboarding
+[ ] Tarjeta cargada en el paso "¡Ya casi!" (prueba de 15 días arrancada)
 [ ] Número de WhatsApp definido (coexistencia o dedicado)
 [ ] Número dado de alta y registrado en Meta (app 2616978828760126)
 [ ] WABA suscrita a webhooks (campo messages)

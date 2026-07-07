@@ -19,7 +19,16 @@ cómo usar tu panel.
 
 ---
 
-## 2. Configurar tu negocio (una sola vez)
+## 2. Tu prueba gratis de 15 días
+
+Al crear tu cuenta te pedimos la tarjeta de crédito (la maneja MercadoPago de forma
+segura, nunca queda guardada en texto en ningún lado). **No se te cobra nada en esos 15
+días.** Cuando termine la prueba, te vamos a pedir que confirmes si querés seguir —
+recién ahí, si decís que sí, empieza el cobro mensual automático. Si no confirmás, el
+panel y el asistente se pausan hasta que lo hagas (no se te cobra igual, simplemente se
+pausa).
+
+## 3. Configurar tu negocio (una sola vez)
 
 La primera vez cargás los datos de tu estética. Si ya lo hiciste al registrarte, podés
 saltear este paso.
@@ -35,7 +44,7 @@ saltear este paso.
 
 ---
 
-## 3. Las secciones de tu panel
+## 4. Las secciones de tu panel
 
 ### 📊 Inicio
 Un resumen rápido de tu actividad y accesos directos a lo más usado.
@@ -78,9 +87,14 @@ para no gastar de más.
 Tus números: cuántas clientas escribieron, cuántos turnos se agendaron, por qué canal, y
 tu **consumo del mes** (mensajes usados vs incluidos en tu plan). Todo calculado solo.
 
+### ⚙️ Ajustes
+Subí el logo de tu negocio (PNG, JPG, WEBP o SVG, hasta 2MB) para que aparezca en tu
+panel en vez del ícono genérico. Es solo para vos — no cambia nada de cómo te ven tus
+clientas por WhatsApp.
+
 ---
 
-## 4. Cómo funciona el día a día
+## 5. Cómo funciona el día a día
 
 1. Una clienta te escribe por WhatsApp.
 2. El asistente le responde al instante: precio, horario, o le ofrece un turno.
@@ -94,7 +108,7 @@ tu **consumo del mes** (mensajes usados vs incluidos en tu plan). Todo calculado
 
 ---
 
-## 5. Consejos para sacarle el máximo
+## 6. Consejos para sacarle el máximo
 
 - **Cargá bien tus servicios y precios.** Es lo que más mejora las respuestas.
 - **Sumá FAQs** con las dudas que más te repiten.
@@ -104,7 +118,7 @@ tu **consumo del mes** (mensajes usados vs incluidos en tu plan). Todo calculado
 
 ---
 
-## 6. Preguntas frecuentes
+## 7. Preguntas frecuentes
 
 **¿El asistente contesta solo, sin que yo haga nada?**
 Sí. Una vez configurado, atiende tu WhatsApp automáticamente las 24 horas.
