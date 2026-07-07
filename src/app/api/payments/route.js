@@ -22,6 +22,14 @@ export async function POST(req) {
     if (!appt) return Response.json({ ok: false, error: "Turno no encontrado" }, { status: 404 });
 
     const { data: tenant } = await sb.from("tenants").select("name,mp_access_token").eq("id", tenant_id).single();
+    // Guard claro: sin token de MercadoPago (ni del tenant ni global) no hay
+    // forma de cobrar — mejor un mensaje accionable que un 500 genérico.
+    if (!tenant?.mp_access_token && !process.env.MP_ACCESS_TOKEN) {
+      return Response.json(
+        { ok: false, error: "MercadoPago no está configurado todavía. Cargá MP_ACCESS_TOKEN en las variables de entorno (o el token del negocio) para cobrar señas." },
+        { status: 400 }
+      );
+    }
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
     const pref = await createPaymentPreference({
       token: tenant?.mp_access_token,
