@@ -6,6 +6,10 @@ const MP_API = "https://api.mercadopago.com";
 // external_reference lleva tenant_id + appointment_id para que el webhook
 // sepa a qué turno acreditar el pago sin depender de datos del cliente.
 export async function createPaymentPreference({ token, title, amount, externalReference, notificationUrl, backUrl }) {
+  // MercadoPago exige que back_urls sea una URL https absoluta para poder
+  // usar auto_return; en desarrollo local (http://localhost) la rechaza. Si
+  // no es https, se manda la preferencia sin auto_return en vez de romper.
+  const backUrlHttps = backUrl?.startsWith("https://") ? backUrl : null;
   const res = await fetch(`${MP_API}/checkout/preferences`, {
     method: "POST",
     headers: {
@@ -16,8 +20,8 @@ export async function createPaymentPreference({ token, title, amount, externalRe
       items: [{ title, quantity: 1, unit_price: Number(amount), currency_id: "ARS" }],
       external_reference: externalReference,
       notification_url: notificationUrl,
-      back_urls: backUrl ? { success: backUrl, pending: backUrl, failure: backUrl } : undefined,
-      auto_return: backUrl ? "approved" : undefined,
+      back_urls: backUrlHttps ? { success: backUrlHttps, pending: backUrlHttps, failure: backUrlHttps } : undefined,
+      auto_return: backUrlHttps ? "approved" : undefined,
     }),
   });
   const data = await res.json().catch(() => null);
