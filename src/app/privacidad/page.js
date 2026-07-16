@@ -48,7 +48,7 @@ export default function Privacidad() {
         pedir dejar de recibir mensajes (opt-out) respondiendo a cualquier mensaje del negocio.
       </p>
 
-      <h2 style={S.h2}>Eliminación de datos</h2>
+      <h2 style={S.h2} id="eliminacion-de-datos">Eliminación de datos</h2>
       <p>
         Para solicitar la eliminación completa de tus datos, escribí a info@conectaiapro.com indicando tu número
         de teléfono y el negocio con el que interactuaste. Procesamos las solicitudes dentro de los 30 días.
