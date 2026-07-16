@@ -3,7 +3,7 @@ import { loadTenantContext, generateReply } from "@/lib/responder";
 import { ruleBasedReply, classifyIntent } from "@/lib/brain";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import { supabaseAdmin } from "@/lib/supabase";
-import { persistInbound, persistOutbound } from "@/lib/conversations";
+import { persistInbound, persistOutbound, isMessageStorm } from "@/lib/conversations";
 
 function isValidVerifyToken(token) {
   const expected = process.env.WHATSAPP_VERIFY_TOKEN;
@@ -61,9 +61,16 @@ export async function POST(req) {
 
   let result;
   if (ctx) {
+    const sb = supabaseAdmin();
+    if (await isMessageStorm(sb, { tenant_id: ctx.tenant.id, phone: from })) {
+      console.error("[wh] bucle de mensajes detectado, no se responde:", from);
+      try {
+        await persistInbound(sb, { tenant_id: ctx.tenant.id, phone: from, canal: "whatsapp", texto, intent: null });
+      } catch (e) { console.error("[wh] persistencia fallo (storm):", e?.message); }
+      return Response.json({ ok: true, storm: true });
+    }
     result = await generateReply(ctx, texto);
     try {
-      const sb = supabaseAdmin();
       const { conversation_id } = await persistInbound(sb, { tenant_id: ctx.tenant.id, phone: from, canal: "whatsapp", texto, intent: result.intent });
       await persistOutbound(sb, { tenant_id: ctx.tenant.id, conversation_id, texto: result.reply, handoff: result.handoff });
     } catch (e) { console.error("[wh] persistencia fallo:", e?.message); }
