@@ -8,7 +8,7 @@ export default function Probador() {
     try {
       const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: userMsg }) });
       const data = await res.json();
-      setChat(c => [...c, { rol: "out", texto: data.reply || data.error, intent: data.intent, engine: data.engine }]);
+      setChat(c => [...c, { rol: "out", texto: data.reply || data.error }]);
     } catch {
       setChat(c => [...c, { rol: "out", texto: "No se pudo conectar con el servidor." }]);
     } finally {
@@ -21,14 +21,13 @@ export default function Probador() {
       <p className="lead">Escribí como si fueras una clienta y mirá cómo responde el cerebro.</p>
       <div className="chatbox">
         {chat.length === 0 && <p className="muted">Probá: "¿cuánto sale el facial?", "quiero un turno", "¿atienden sábados?"</p>}
-        {chat.map((m, i) => (<div key={i} className={"msg " + (m.rol === "in" ? "in" : "out")}>{m.texto}{m.intent && <div style={{ fontSize: 10, color: "#8E89A6", marginTop: 4 }}>intent: {m.intent} · {m.engine}</div>}</div>))}
+        {chat.map((m, i) => (<div key={i} className={"msg " + (m.rol === "in" ? "in" : "out")}>{m.texto}</div>))}
         {loading && <div className="muted" style={{ fontSize: 13 }}>escribiendo…</div>}
       </div>
       <form onSubmit={send} className="row">
         <input style={{ flex: 1, marginTop: 0 }} value={text} onChange={e => setText(e.target.value)} placeholder="Escribí un mensaje…" />
         <button className="btn">Enviar</button>
       </form>
-      <p className="muted" style={{ fontSize: 13, marginTop: 12 }}>Sin clave de OpenRouter responde con reglas; al cargar OPENROUTER_API_KEY usa el LLM.</p>
     </>
   );
 }
