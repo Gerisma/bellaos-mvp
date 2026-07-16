@@ -42,7 +42,7 @@ export default function Faqs() {
       <p className="lead">Cargá las dudas más comunes de tus clientas — el asistente las usa para responder mejor.</p>
       {sinEmbedding && (
         <p className="muted" style={{ fontSize: 13 }}>
-          Para que el asistente las use automáticamente con IA, configurá <code>OPENROUTER_API_KEY</code>. Sin esa clave igual quedan guardadas, pero el bot responde por reglas.
+          Para que el asistente las use de forma más flexible con inteligencia artificial, activá el modo IA de tu plan. Mientras tanto, igual quedan guardadas y el bot responde con reglas simples.
         </p>
       )}
       <form onSubmit={crear} className="card" style={{ margin: "16px 0" }}>
