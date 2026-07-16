@@ -36,8 +36,8 @@ export default function Conversaciones() {
       <h1>Conversaciones</h1>
       <p className="lead">Todo lo que entra por WhatsApp, Instagram, Facebook y web, en un solo lugar.</p>
       {error && <p className="err">{error}</p>}
-      <div className="grid2" style={{ marginTop: 16, gridTemplateColumns: "340px 1fr", alignItems: "start" }}>
-        <div className="card" style={{ padding: 0, maxHeight: 560, overflowY: "auto" }}>
+      <div className="grid2" style={{ marginTop: 16, gridTemplateColumns: "340px 1fr", alignItems: "stretch" }}>
+        <div className="card" style={{ padding: 0, height: 640, overflowY: "auto" }}>
           {loading && <p className="muted" style={{ padding: 16 }}>Cargando…</p>}
           {!loading && convs.length === 0 && <p className="muted" style={{ padding: 16 }}>Sin conversaciones todavía. Cuando el bot reciba mensajes reales, aparecen acá.</p>}
           {convs.map(c => {
@@ -59,15 +59,15 @@ export default function Conversaciones() {
             );
           })}
         </div>
-        <div className="card" style={{ minHeight: 300 }}>
+        <div className="card" style={{ height: 640, display: "flex", flexDirection: "column" }}>
           {!activa ? <p className="muted">Elegí una conversación para verla.</p> : (
             <>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #EDEBF6" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #EDEBF6", flexShrink: 0 }}>
                 <span style={{ width: 30, height: 30, borderRadius: 8, background: (CH[activa.canal] || ["·", "#8E89A6"])[1], color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{(CH[activa.canal] || ["·"])[0]}</span>
                 <b>{activa.contacts?.nombre || activa.contacts?.telefono || "Contacto"}</b>
                 {ESTADO_LABEL[activa.estado] && <span className="pill riesgo">{ESTADO_LABEL[activa.estado]}</span>}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", minHeight: 0, flex: 1 }}>
                 {msgs.map((m, i) => (
                   <div key={i} className={"msg " + (m.rol === "in" ? "in" : "out")}>
                     {m.texto}
