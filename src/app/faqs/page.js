@@ -40,6 +40,10 @@ export default function Faqs() {
     <>
       <h1>Preguntas frecuentes</h1>
       <p className="lead">Cargá las dudas más comunes de tus clientas — el asistente las usa para responder mejor.</p>
+      <div className="card" style={{ marginBottom: 16, fontSize: 13.5 }}>
+        💡 ¿De dónde salen estas preguntas? Probá tu asistente en el <a href="/probador">Probador</a>.
+        Cuando no sepa responder algo, cargalo acá para que lo aprenda.
+      </div>
       {sinEmbedding && (
         <p className="muted" style={{ fontSize: 13 }}>
           Para que el asistente las use de forma más flexible con inteligencia artificial, activá el modo IA de tu plan. Mientras tanto, igual quedan guardadas y el bot responde con reglas simples.

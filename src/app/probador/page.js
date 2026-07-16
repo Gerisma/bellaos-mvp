@@ -19,6 +19,10 @@ export default function Probador() {
     <>
       <h1>Probador del asistente</h1>
       <p className="lead">Escribí como si fueras una clienta y mirá cómo responde el cerebro.</p>
+      <div className="card" style={{ marginBottom: 16, fontSize: 13.5 }}>
+        💡 Así entrenás a tu asistente: probalo acá con preguntas reales. Si en algún momento no supo
+        responder algo, cargá esa pregunta en <a href="/faqs">Preguntas frecuentes</a> para que la aprenda.
+      </div>
       <div className="chatbox">
         {chat.length === 0 && <p className="muted">Probá: "¿cuánto sale el facial?", "quiero un turno", "¿atienden sábados?"</p>}
         {chat.map((m, i) => (<div key={i} className={"msg " + (m.rol === "in" ? "in" : "out")}>{m.texto}</div>))}
