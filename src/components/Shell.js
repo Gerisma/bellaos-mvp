@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 const items = [
   { h: "/", ic: "📊", t: "Inicio" },
-  { h: "/probador", ic: "🤖", t: "Probador" },
-  { h: "/faqs", ic: "📚", t: "Preguntas frecuentes" },
+  { h: "/entrenador", ic: "🎓", t: "Entrenador" },
   { h: "/conversaciones", ic: "💬", t: "Conversaciones" },
   { h: "/panel", ic: "👥", t: "Contactos" },
   { h: "/agenda", ic: "📅", t: "Agenda" },

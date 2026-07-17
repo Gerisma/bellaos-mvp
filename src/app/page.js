@@ -16,13 +16,13 @@ function buildRecomendaciones(d) {
     r.push({ tono: "tip", texto: `Tenés ${d.inactivas} clientas inactivas. Lanzá una campaña para recuperarlas.`, href: "/reactivador", cta: "Reactivar clientas" });
   }
   if (d.turnos === 0) {
-    r.push({ tono: "tip", texto: "Todavía no se agendó ningún turno. Probá el asistente y revisá que tus servicios y precios estén bien cargados.", href: "/probador", cta: "Abrir Probador" });
+    r.push({ tono: "tip", texto: "Todavía no se agendó ningún turno. Probá el asistente y revisá que tus servicios y precios estén bien cargados.", href: "/entrenador", cta: "Abrir Entrenador" });
   }
   if (d.reactivadas > 0) {
     r.push({ tono: "ok", texto: `¡Bien! Ya recuperaste ${d.reactivadas} clienta(s) este mes gracias al Reactivador.` });
   }
   if (r.length === 0) {
-    r.push({ tono: "tip", texto: "Cargá más Preguntas frecuentes para que el asistente responda con más precisión.", href: "/faqs", cta: "Ir a Preguntas frecuentes" });
+    r.push({ tono: "tip", texto: "Cargá más Preguntas frecuentes para que el asistente responda con más precisión.", href: "/entrenador", cta: "Ir al Entrenador" });
   }
   return r;
 }
