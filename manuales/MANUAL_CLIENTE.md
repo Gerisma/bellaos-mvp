@@ -47,17 +47,21 @@ saltear este paso.
 ## 4. Las secciones de tu panel
 
 ### 📊 Inicio
-Un resumen rápido de tu actividad y accesos directos a lo más usado.
+Tu panel de estado: turnos agendados, ingresos atribuidos, clientas reactivadas e
+inactivas pendientes, cuánto consumiste de tu paquete de mensajes del mes, y
+**recomendaciones** que cambian según cómo viene tu negocio (por ejemplo, si tenés
+clientas inactivas te sugiere lanzar una campaña de Reactivador).
 
-### 🤖 Probador
-Un chat de prueba para hablar con tu asistente **sin gastar mensajes reales**. Escribile
-como si fueras una clienta ("¿cuánto sale la limpieza facial?", "¿tenés turno el sábado?")
-y mirá cómo responde. Ideal para revisar que diga lo correcto antes de salir al público.
-
-### 📚 FAQs (Preguntas frecuentes)
-Acá cargás las preguntas que más te hacen y su respuesta (por ejemplo: "¿Puedo pagar con
-tarjeta?" → "Sí, aceptamos débito, crédito y transferencia"). El asistente las usa para
-contestar mejor. **Cuantas más FAQs cargues, más completo responde.**
+### 🎓 Entrenador
+Acá "entrenás" a tu asistente, en dos partes:
+- **Preguntas frecuentes** (izquierda): cargá las preguntas que más te hacen y su
+  respuesta (por ejemplo: "¿Puedo pagar con tarjeta?" → "Sí, aceptamos débito, crédito
+  y transferencia"). El asistente las usa para contestar mejor. Cuantas más cargues,
+  más completo responde.
+- **Probador** (derecha): un chat de prueba para hablar con tu asistente **sin gastar
+  mensajes reales**. Escribile como si fueras una clienta ("¿cuánto sale la limpieza
+  facial?", "¿tenés turno el sábado?") y mirá cómo responde. Si en algún momento no
+  supo contestar algo, cargalo del lado izquierdo para que lo aprenda.
 
 ### 💬 Conversaciones
 Tu bandeja de entrada unificada: todos los chats de WhatsApp en un solo lugar. Ves quién
@@ -111,8 +115,8 @@ clientas por WhatsApp.
 ## 6. Consejos para sacarle el máximo
 
 - **Cargá bien tus servicios y precios.** Es lo que más mejora las respuestas.
-- **Sumá FAQs** con las dudas que más te repiten.
-- **Probá primero en el Probador** cada vez que cambies algo.
+- **Sumá preguntas frecuentes** con las dudas que más te repiten.
+- **Probá primero en el Entrenador** cada vez que cambies algo.
 - **Mirá tu consumo** en Informes/Reactivador para no pasarte del plan.
 - **Revisá Conversaciones** una vez al día por si alguien necesita atención personal.
 

@@ -37,9 +37,8 @@ paso manual. Si rompés algo, revierte con `git revert` y volvé a pushear.
 Estas son las secciones que ve el cliente cuando entra a la app. Conviene que las
 conozcas para poder darle soporte:
 
-1. **Inicio** — resumen y accesos rápidos.
-2. **Probador** — un chat de prueba para hablar con el asistente sin gastar WhatsApp real. Ideal para que el cliente vea cómo responde.
-3. **FAQs** — preguntas frecuentes que el cliente carga; el asistente las usa para responder mejor (base de conocimiento).
+1. **Inicio** — KPIs (turnos, ingresos, reactivadas, inactivas), consumo del mes y recomendaciones dinámicas según el estado real del negocio.
+2. **Entrenador** — Preguntas frecuentes (izquierda) + Probador (derecha) en una sola pantalla. El cliente prueba el asistente con casos reales y, si algo no lo supo responder, lo carga como FAQ ahí mismo para que lo aprenda.
 4. **Conversaciones** — bandeja unificada: todos los chats de WhatsApp, quién escribió y qué respondió el bot.
 5. **Contactos** — la lista de clientas del negocio (se crean solas cuando escriben).
 6. **Agenda** — turnos reales. Se pueden crear a mano o los agenda el asistente.
@@ -86,7 +85,7 @@ El paso a paso detallado está en `manuales/ONBOARDING_CLIENTE_PASO_A_PASO.md`. 
 2. **Vos** conectás su WhatsApp a la plataforma (hoy es un proceso manual en Meta +
    Supabase; ver el paso a paso). Este es el único paso técnico.
 3. Cargás su plan en la base (`tenants.plan`).
-4. El cliente prueba en `/probador`, carga sus FAQs y ya está atendiendo.
+4. El cliente prueba en `/entrenador` (Probador + FAQs juntos) y ya está atendiendo.
 
 > Hoy la conexión de WhatsApp de cada cliente la hacés vos manualmente. Cuando se
 > implemente **Embedded Signup** (ver "Qué falta"), el cliente lo hará solo con un

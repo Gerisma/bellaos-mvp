@@ -62,7 +62,7 @@ En `/onboarding`:
 2. Cargá cada **servicio** con nombre, precio, duración y recompra (botón "+ Agregar servicio").
 3. "Crear negocio". Esto crea el tenant, su perfil de marca y sus servicios en Supabase.
 
-> Resultado: ya se puede probar el asistente en `/probador` (responde con reglas o con IA
+> Resultado: ya se puede probar el asistente en `/entrenador` (responde con reglas o con IA
 > si `OPENROUTER_API_KEY` está activa), aunque WhatsApp real todavía no esté conectado.
 
 ---
@@ -113,9 +113,9 @@ Este es el único bloque técnico. Es el mismo proceso que hiciste con "Bella Es
 
 ## BLOQUE 5 — Puesta a punto y entrega
 
-1. Con el cliente, cargá **FAQs** en `/faqs` (las dudas más comunes de sus clientas).
-2. Probá varios mensajes reales/ficticios en `/probador` y por WhatsApp.
-3. Mostrale las 8 secciones del panel (o pasale `manuales/MANUAL_CLIENTE.md`).
+1. Con el cliente, cargá **Preguntas frecuentes** en `/entrenador` (las dudas más comunes de sus clientas).
+2. Probá varios mensajes reales/ficticios en el **Probador** (mismo `/entrenador`, columna derecha) y por WhatsApp.
+3. Mostrale las secciones del panel (o pasale `manuales/MANUAL_CLIENTE.md`).
 4. Explicale el **consumo de mensajes** y dónde verlo (Informes / Reactivador).
 5. ¡Listo! El cliente ya está atendiendo con IA.
 
@@ -135,7 +135,7 @@ Este es el único bloque técnico. Es el mismo proceso que hiciste con "Bella Es
 [ ] Prueba real por WhatsApp OK (responde con datos del negocio)
 [ ] Mensaje guardado en tabla messages
 [ ] tenants.plan asignado
-[ ] FAQs cargadas
+[ ] Preguntas frecuentes cargadas (en /entrenador)
 [ ] Cliente capacitado + manual entregado
 ```
 
