@@ -16,7 +16,7 @@ export default function Login() {
       const sb = supabaseBrowser();
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if (error) { setError(error.message); return; }
-      window.location.href = "/";
+      window.location.href = "/inicio";
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally {

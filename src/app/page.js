@@ -1,79 +1,46 @@
-"use client";
-import { useState, useEffect } from "react";
-import ConnectWhatsApp from "@/components/ConnectWhatsApp";
-const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-AR");
-const TONE_COLOR = { alerta: "#F2545B", aviso: "#F6A609", tip: "#6D4AFF", ok: "#1FBF6B" };
+const PRODUCTOS = [
+  { nombre: "BellaOS", desc: "Automatización con IA para estéticas, peluquerías y centros de bienestar: atiende WhatsApp, agenda turnos y fideliza clientas.", disponible: true },
+  { nombre: "Próximamente", desc: "Estamos preparando soluciones para inmobiliarias, concesionarias y más rubros.", disponible: false },
+];
 
-function buildRecomendaciones(d) {
-  const r = [];
-  const u = d.uso;
-  if (u?.overage > 0) {
-    r.push({ tono: "alerta", texto: `Superaste tu paquete de mensajes (excedente: ${fmt(u.overage_costo_ars)}). Subí el tope o revisá tu plan.`, href: "/reactivador", cta: "Ir a Reactivador" });
-  } else if (u?.alerta_80) {
-    r.push({ tono: "aviso", texto: "Estás cerca del límite de mensajes incluidos en tu plan este mes.", href: "/reactivador", cta: "Ver consumo" });
-  }
-  if (d.inactivas > 0) {
-    r.push({ tono: "tip", texto: `Tenés ${d.inactivas} clientas inactivas. Lanzá una campaña para recuperarlas.`, href: "/reactivador", cta: "Reactivar clientas" });
-  }
-  if (d.turnos === 0) {
-    r.push({ tono: "tip", texto: "Todavía no se agendó ningún turno. Probá el asistente y revisá que tus servicios y precios estén bien cargados.", href: "/entrenador", cta: "Abrir Entrenador" });
-  }
-  if (d.reactivadas > 0) {
-    r.push({ tono: "ok", texto: `¡Bien! Ya recuperaste ${d.reactivadas} clienta(s) este mes gracias al Reactivador.` });
-  }
-  if (r.length === 0) {
-    r.push({ tono: "tip", texto: "Cargá más Preguntas frecuentes para que el asistente responda con más precisión.", href: "/entrenador", cta: "Ir al Entrenador" });
-  }
-  return r;
-}
-
-export default function Home() {
-  const [d, setD] = useState(null);
-  useEffect(() => {
-    fetch("/api/informes").then(r => r.json()).then(setD).catch(() => setD({ error: "No se pudo conectar con el servidor." }));
-  }, []);
-  const u = d?.uso;
-  const recomendaciones = d && !d.error ? buildRecomendaciones(d) : [];
-
+export default function LandingConectaIA() {
   return (
-    <>
-      <h1>Hola 👋</h1>
-      <p className="lead">Así viene funcionando tu negocio con IA.</p>
-      <div style={{ marginBottom: 20 }}><ConnectWhatsApp /></div>
-      {!d ? <p className="muted">Cargando…</p> : d.error ? <p className="err">{d.error}</p> : (
-        <>
-          <div className="kpis">
-            <div className="card kpi"><div className="lbl">Turnos agendados</div><div className="val">{d.turnos}</div></div>
-            <div className="card kpi"><div className="lbl">Ingresos atribuidos</div><div className="val" style={{ color: "#1FBF6B" }}>{fmt(d.ingresos)}</div></div>
-            <div className="card kpi"><div className="lbl">Clientas reactivadas</div><div className="val" style={{ color: "#6D4AFF" }}>{d.reactivadas}</div></div>
-            <div className="card kpi"><div className="lbl">Inactivas pendientes</div><div className="val" style={{ color: "#F6A609" }}>{d.inactivas}</div></div>
-          </div>
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 36px", maxWidth: 1040, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 13, background: "var(--grad)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.25rem", color: "#fff" }}>C</div>
+          <b style={{ fontSize: "1.3rem" }}>ConectaIA Pro</b>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <a href="/login" className="btn btn-ghost">Iniciar sesión</a>
+          <a href="/signup" className="btn">Empezar gratis</a>
+        </div>
+      </header>
 
-          {u && (
-            <div className="card" style={{ marginTop: 16 }}>
-              <b>Consumo de mensajes del mes</b>
-              <div className="muted" style={{ fontSize: 13, margin: "4px 0 8px" }}>Plan: {u.plan} · paquete incluido: {u.limit} mensajes de campaña</div>
-              <div className="bar" style={{ height: 12 }}><i style={{ width: `${u.pct}%`, background: u.overage ? "#F2545B" : undefined }} /></div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 14, fontWeight: 600 }}>
-                <span>{u.used} / {u.limit} usados</span>
-                <span className={u.overage ? "err" : "muted"}>{u.overage ? `Excedente: ${u.overage} msj · ${fmt(u.overage_costo_ars)}` : (u.alerta_80 ? "⚠ cerca del límite" : "dentro del paquete")}</span>
-              </div>
-            </div>
-          )}
+      <main style={{ maxWidth: 1040, margin: "0 auto", padding: "40px 36px 80px" }}>
+        <h1 style={{ fontSize: "2.2rem", maxWidth: 640 }}>Soluciones de inteligencia artificial para que tu negocio atienda solo</h1>
+        <p className="lead" style={{ fontSize: "1.05rem", maxWidth: 560, marginTop: 12 }}>
+          ConectaIA Pro desarrolla productos con IA para distintos rubros. Nuestro primer producto,
+          BellaOS, ya atiende por WhatsApp a estéticas y peluquerías las 24 horas.
+        </p>
 
-          <div className="card" style={{ marginTop: 16 }}>
-            <b>Recomendaciones</b>
-            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
-              {recomendaciones.map((r, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, paddingBottom: 12, borderBottom: i < recomendaciones.length - 1 ? "1px solid #EDEBF6" : "none" }}>
-                  <span style={{ fontSize: 14 }}><span style={{ color: TONE_COLOR[r.tono], marginRight: 6 }}>●</span>{r.texto}</span>
-                  {r.href && <a href={r.href} className="btn btn-ghost" style={{ padding: "6px 14px", flexShrink: 0, whiteSpace: "nowrap" }}>{r.cta}</a>}
-                </div>
-              ))}
+        <div className="grid2" style={{ marginTop: 40 }}>
+          {PRODUCTOS.map((p) => (
+            <div key={p.nombre} className="card" style={{ opacity: p.disponible ? 1 : 0.6 }}>
+              <b style={{ fontSize: "1.15rem" }}>{p.nombre}</b>
+              <p className="muted" style={{ marginTop: 8, fontSize: 14 }}>{p.desc}</p>
+              {p.disponible && (
+                <a href="/signup" className="btn" style={{ marginTop: 16, display: "inline-block" }}>Probar BellaOS →</a>
+              )}
             </div>
-          </div>
-        </>
-      )}
-    </>
+          ))}
+        </div>
+      </main>
+
+      <footer style={{ maxWidth: 1040, margin: "0 auto", padding: "24px 36px", display: "flex", justifyContent: "space-between", color: "var(--suave)", fontSize: 13 }}>
+        <span>ConectaIA Pro — info@conectaiapro.com</span>
+        <span><a href="/privacidad">Privacidad</a> · <a href="/terminos">Términos</a></span>
+      </footer>
+    </div>
   );
 }

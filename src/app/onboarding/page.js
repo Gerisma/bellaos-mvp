@@ -39,7 +39,7 @@ export default function Onboarding() {
         <div style={{ maxWidth: 420 }}>
           <CardCapture onSaved={() => setCardSaved(true)} />
           {(cardSaved || !MP_ENABLED) && (
-            <button className="btn" style={{ marginTop: 16, width: "100%" }} onClick={() => (window.location.href = "/")}>
+            <button className="btn" style={{ marginTop: 16, width: "100%" }} onClick={() => (window.location.href = "/inicio")}>
               {cardSaved ? "Listo, ir al panel →" : "Continuar sin tarjeta por ahora →"}
             </button>
           )}

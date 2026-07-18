@@ -3,7 +3,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 const items = [
-  { h: "/", ic: "📊", t: "Inicio" },
+  { h: "/inicio", ic: "📊", t: "Inicio" },
   { h: "/entrenador", ic: "🎓", t: "Entrenador" },
   { h: "/conversaciones", ic: "💬", t: "Conversaciones" },
   { h: "/panel", ic: "👥", t: "Contactos" },
@@ -12,11 +12,11 @@ const items = [
   { h: "/informes", ic: "📈", t: "Informes" },
   { h: "/ajustes", ic: "⚙️", t: "Ajustes" },
 ];
-const PUBLIC_PAGES = ["/login", "/signup"];
+const PUBLIC_PAGES = ["/", "/login", "/signup"];
 
 export default function Shell({ children }) {
   const p = usePathname() || "/";
-  const active = (h) => (h === "/" ? p === "/" : p.startsWith(h));
+  const active = (h) => p.startsWith(h);
   const [email, setEmail] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [logoUrl, setLogoUrl] = useState(null);

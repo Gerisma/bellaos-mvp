@@ -19,7 +19,7 @@ export default function Suscripcion() {
       <>
         <h1>¡Listo! 🎉</h1>
         <p className="lead">Tu suscripción quedó activa. Ya podés seguir usando BellaOS con normalidad.</p>
-        <a href="/" className="btn">Ir al panel →</a>
+        <a href="/inicio" className="btn">Ir al panel →</a>
       </>
     );
   }

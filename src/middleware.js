@@ -31,7 +31,10 @@ function rateLimited(pathname, ip) {
 // Rutas accesibles sin sesión: el webhook y el cron validan su propio
 // secreto (HMAC / CRON_SECRET) y deben seguir siendo accesibles por
 // Meta/Vercel; login/signup son, justamente, cómo se consigue la sesión.
-const PUBLIC_PATHS = ["/login", "/signup", "/privacidad", "/terminos"];
+// "/" es la portada pública de ConectaIA Pro (la empresa), separada del
+// panel interno de BellaOS (que vive en /inicio) para que Meta y cualquier
+// visitante encuentren la marca de la empresa en el dominio.
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/privacidad", "/terminos"];
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
@@ -74,8 +77,8 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (pathname === "/login" || pathname === "/signup") {
-    return NextResponse.redirect(new URL("/", req.url));
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/") {
+    return NextResponse.redirect(new URL("/inicio", req.url));
   }
 
   const exentoDeOnboarding = pathname === "/onboarding" || pathname === "/api/tenants";
