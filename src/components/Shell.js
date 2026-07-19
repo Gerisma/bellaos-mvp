@@ -45,7 +45,7 @@ export default function Shell({ children }) {
       <aside className="side">
         <div className="brand">
           {logoUrl ? <img src={logoUrl} alt="" className="dot" style={{ objectFit: "cover" }} /> : <div className="dot">B</div>}
-          <div><b>BellaOS</b><small>POWERED BY CONECTAIA</small></div>
+          <div><b>BellaOS</b><small>POWERED BY CONECTAIA PRO</small></div>
         </div>
         <nav>{navItems.map((i) => (<a key={i.h} href={i.h} className={"nav-item" + (active(i.h) ? " active" : "")}><span className="ic">{i.ic}</span>{i.t}</a>))}</nav>
         <div className="promo">✨ Todo automático<br /><span>La IA atiende, agenda y fideliza por vos.</span></div>
