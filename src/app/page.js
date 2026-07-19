@@ -9,7 +9,7 @@ export default function LandingConectaIA() {
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 36px", maxWidth: 1040, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 40, height: 40, borderRadius: 13, background: "var(--grad)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.25rem", color: "#fff" }}>C</div>
-          <b style={{ fontSize: "1.3rem" }}>ConectaIA Pro</b>
+          <b style={{ fontSize: "1.3rem" }}>Conectaia PRO</b>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <a href="/login" className="btn btn-ghost">Iniciar sesión</a>
@@ -20,7 +20,7 @@ export default function LandingConectaIA() {
       <main style={{ maxWidth: 1040, margin: "0 auto", padding: "40px 36px 80px" }}>
         <h1 style={{ fontSize: "2.2rem", maxWidth: 640 }}>Soluciones de inteligencia artificial para que tu negocio atienda solo</h1>
         <p className="lead" style={{ fontSize: "1.05rem", maxWidth: 560, marginTop: 12 }}>
-          ConectaIA Pro desarrolla productos con IA para distintos rubros. Nuestro primer producto,
+          Conectaia PRO desarrolla productos con IA para distintos rubros. Nuestro primer producto,
           BellaOS, ya atiende por WhatsApp a estéticas y peluquerías las 24 horas.
         </p>
 
@@ -38,7 +38,7 @@ export default function LandingConectaIA() {
       </main>
 
       <footer style={{ maxWidth: 1040, margin: "0 auto", padding: "24px 36px", display: "flex", justifyContent: "space-between", color: "var(--suave)", fontSize: 13 }}>
-        <span>ConectaIA Pro — info@conectaiapro.com</span>
+        <span>Conectaia PRO — info@conectaiapro.com</span>
         <span><a href="/privacidad">Privacidad</a> · <a href="/terminos">Términos</a></span>
       </footer>
     </div>

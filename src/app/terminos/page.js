@@ -11,12 +11,12 @@ export default function Terminos() {
   return (
     <main style={S.wrap}>
       <h1 style={S.h1}>Términos del Servicio</h1>
-      <p style={S.muted}>BellaOS — un producto de ConectaIA Pro. Última actualización: julio 2026.</p>
+      <p style={S.muted}>BellaOS — un producto de Conectaia PRO. Última actualización: julio 2026.</p>
 
       <h2 style={S.h2}>Aceptación de los términos</h2>
       <p>
         Al usar BellaOS aceptás estos Términos del Servicio. BellaOS es una plataforma de automatización con
-        inteligencia artificial para negocios de estética, peluquería y bienestar, operada por ConectaIA Pro
+        inteligencia artificial para negocios de estética, peluquería y bienestar, operada por Conectaia PRO
         (contacto: info@conectaiapro.com). Si no estás de acuerdo con estos términos, no utilices el servicio.
       </p>
 
@@ -54,7 +54,7 @@ export default function Terminos() {
       <p>
         El servicio se presta "tal cual". BellaOS procura la máxima disponibilidad y precisión de las respuestas
         automáticas, pero no garantiza que estén libres de errores ni que los canales de terceros (como WhatsApp)
-        estén siempre disponibles. En la medida permitida por la ley, ConectaIA Pro no será responsable por daños
+        estén siempre disponibles. En la medida permitida por la ley, Conectaia PRO no será responsable por daños
         indirectos derivados del uso del servicio.
       </p>
 
@@ -71,7 +71,7 @@ export default function Terminos() {
       </p>
 
       <h2 style={S.h2}>Contacto</h2>
-      <p>ConectaIA Pro — info@conectaiapro.com</p>
+      <p>Conectaia PRO — info@conectaiapro.com</p>
     </main>
   );
 }

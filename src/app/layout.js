@@ -1,6 +1,6 @@
 import "./globals.css";
 import Shell from "@/components/Shell";
-export const metadata = { title: "ConectaIA Pro", description: "ConectaIA Pro — soluciones de inteligencia artificial para empresas. Creadores de BellaOS." };
+export const metadata = { title: "Conectaia PRO", description: "Conectaia PRO — soluciones de inteligencia artificial para empresas. Creadores de BellaOS." };
 export default function RootLayout({ children }) {
   return (
     <html lang="es">

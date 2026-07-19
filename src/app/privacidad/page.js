@@ -11,12 +11,12 @@ export default function Privacidad() {
   return (
     <main style={S.wrap}>
       <h1 style={S.h1}>Política de Privacidad</h1>
-      <p style={S.muted}>BellaOS — un producto de ConectaIA Pro. Última actualización: julio 2026.</p>
+      <p style={S.muted}>BellaOS — un producto de Conectaia PRO. Última actualización: julio 2026.</p>
 
       <h2 style={S.h2}>Quiénes somos</h2>
       <p>
         BellaOS es una plataforma de automatización con inteligencia artificial para negocios de estética,
-        peluquería y bienestar, operada por ConectaIA Pro (contacto: info@conectaiapro.com).
+        peluquería y bienestar, operada por Conectaia PRO (contacto: info@conectaiapro.com).
       </p>
 
       <h2 style={S.h2}>Qué datos tratamos</h2>
@@ -55,7 +55,7 @@ export default function Privacidad() {
       </p>
 
       <h2 style={S.h2}>Contacto</h2>
-      <p>ConectaIA Pro — info@conectaiapro.com</p>
+      <p>Conectaia PRO — info@conectaiapro.com</p>
     </main>
   );
 }
