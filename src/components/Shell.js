@@ -10,9 +10,10 @@ const items = [
   { h: "/agenda", ic: "📅", t: "Agenda" },
   { h: "/reactivador", ic: "💎", t: "Reactivador" },
   { h: "/informes", ic: "📈", t: "Informes" },
+  { h: "/simulador-roi", ic: "🧮", t: "Simulador ROI" },
   { h: "/ajustes", ic: "⚙️", t: "Ajustes" },
 ];
-const PUBLIC_PAGES = ["/", "/login", "/signup"];
+const PUBLIC_PAGES = ["/", "/login", "/signup", "/terminos", "/privacidad"];
 
 export default function Shell({ children }) {
   const p = usePathname() || "/";

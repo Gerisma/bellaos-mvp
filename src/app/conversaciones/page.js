@@ -34,7 +34,7 @@ export default function Conversaciones() {
   return (
     <>
       <h1>Conversaciones</h1>
-      <p className="lead">Todo lo que entra por WhatsApp, Instagram, Facebook y web, en un solo lugar.</p>
+      <p className="lead">Bandeja unificada de conversaciones. Hoy recibe WhatsApp; Instagram, Facebook y el chat del sitio se suman a esta misma bandeja apenas se conecten.</p>
       {error && <p className="err">{error}</p>}
       <div className="grid2" style={{ marginTop: 16, gridTemplateColumns: "340px 1fr", alignItems: "stretch" }}>
         <div className="card" style={{ padding: 0, height: 640, overflowY: "auto" }}>

@@ -10,6 +10,26 @@
 
 ---
 
+## 🔍 Auditoría vs. Demo Original (julio 2026)
+
+Comparación entre `BellaOS_Demo.html` (la maqueta con datos falsos del principio) y el producto real. Hecho hoy:
+
+- [x] Copy de Conversaciones corregido: ya no promete Instagram/Facebook como si estuvieran conectados (decía "todo lo que entra por WhatsApp, Instagram, Facebook y web" sin que IG/FB estén wireados todavía).
+- [x] Bug de layout corregido: Términos y Privacidad se renderizaban dentro del panel privado (sidebar + "Cerrar sesión") en vez de como página pública standalone — un visitante anónimo que entraba desde el footer de la portada veía el panel de admin alrededor del texto legal. Arreglado en `Shell.js` (`PUBLIC_PAGES`).
+- [x] Página **Simulador ROI** construida (`/simulador-roi`, agregada al menú): calculadora en vivo de plata recuperable, para usar en reuniones de venta. Antes no existía.
+- [x] Auditoría de consistencia visual: se revisó el código de Inicio, Conversaciones, Agenda, Informes, Entrenador, Contactos, Admin, Signup, Términos/Privacidad. El sistema de diseño premium (sidebar violeta, `.card`, `.kpi`, `.btn`, etc. en `globals.css`) ya está aplicado de forma consistente en casi toda la app — el ítem "unificar diseño" del roadmap está más avanzado de lo que el checklist reflejaba.
+
+Todavía sin construir (existían como pantallas de fantasía en el demo, no como código):
+
+- [ ] **CRM-Embudo visual** dedicado (vista tipo Kanban con tarjetas de clienta arrastrables por etapa). Hoy el embudo existe como datos y barras en `/informes`, pero no como pantalla propia interactiva.
+- [ ] **Anuncios** (integración con Meta Ads: Pixel, CAPI, retargeting, medición de ROI por campaña, creativos generados por IA). No hay página ni lógica — coincide con Fase 7 más abajo.
+- [ ] **Contenido** (IA que genera y publica posts/reels solos, con calendario de contenido). No existe.
+- [ ] **Reputación / reseñas de Google** automáticas en Informes (el demo mostraba "4,9★, +18 reseñas este mes"). No implementado — depende de Fase 6 (Fidelización v2).
+- [ ] Adaptadores de Instagram y Facebook para que `Conversaciones` reciba mensajes reales de esos canales (Fase 3 más abajo) — hoy el componente ya soporta mostrar esos canales, falta el webhook/adapter que meta los datos.
+- [ ] Agenda v2: que la IA agende sola parseando fecha/servicio del chat y cobre seña (Fase 2/3) — hoy `/agenda` es un formulario manual.
+
+---
+
 ## 🔧 Fase 2: Setup por Cliente (PENDIENTE)
 
 ### Opción A: Self-Service (Cliente configura solo)
@@ -118,6 +138,21 @@
 - [ ] Google Ads integration
 - [ ] Conversion tracking
 - [ ] Search campaigns (local search)
+
+---
+
+## 📇 Cuenta Meta Business / WhatsApp (PENDIENTE)
+
+Del reordenamiento de julio 2026 (nombre "Conectaia PRO" rechazado y corregido), quedó pendiente:
+
+- [ ] Configurar **Enlaces de mensajes** (WhatsApp Manager → el número → Enlaces de mensajes) para el número de Conectaia PRO (+54 9 362 484-0504): crear un link con texto precargado distinto por canal (bio de Instagram, botón del sitio, cartel/QR físico) para saber de dónde viene cada lead. Gratis, sin código.
+- [ ] Evaluar **Comandos** (`/demo`, `/precio`, etc.) en WhatsApp Manager: solo autocompletan lo que el usuario escribe, no responden solos — si se agregan, hay que sumar en `responder.js` una regla que los detecte y conteste por reglas sin llamar al LLM (ahorro real de tokens).
+- [ ] Actividad mínima en Facebook e Instagram de Conectaia PRO: foto de perfil/portada y un par de publicaciones reales (hoy: 9 y 41 seguidores, sin contenido).
+- [ ] Suavizar la bio de Instagram @conectaia_pro (sacar "+40% de ventas en 90 días GARANTIZADO", suena a promesa no verificable).
+- [ ] Cargar método de pago en las cuentas de WhatsApp Business (Configuración → Facturación y pagos → Cuentas de WhatsApp Business) — hoy ambas figuran "Sin método de pago"; falta cuando se agoten las conversaciones de servicio gratuitas o se envíen plantillas de marketing. Acción financiera: la tiene que hacer Gerardo.
+- [ ] Revisar el acceso duplicado "Gerardo Alegre Alegre @conectaia.ok" (marcado Inactivo) en Usuarios del portafolio — confirmar si hace falta o se puede quitar.
+- [ ] Definir Divisa del WABA ConectaIApro (sin definir, relevante si se usa catálogo/pagos).
+- [ ] Iniciar verificación **Tech Provider** en Business Info cuando BellaOS empiece a dar de alta números de WhatsApp para clientes (multi-tenant) — no urgente hoy.
 
 ---
 
