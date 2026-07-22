@@ -3,7 +3,7 @@ import { loadTenantContext, generateReply } from "@/lib/responder";
 import { ruleBasedReply, classifyIntent } from "@/lib/brain";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import { supabaseAdmin } from "@/lib/supabase";
-import { persistInbound, persistOutbound, isMessageStorm } from "@/lib/conversations";
+import { persistInbound, persistOutbound, isMessageStorm, updateInboundIntent } from "@/lib/conversations";
 
 function isValidVerifyToken(token) {
   const expected = process.env.WHATSAPP_VERIFY_TOKEN;
@@ -69,11 +69,20 @@ export async function POST(req) {
       } catch (e) { console.error("[wh] persistencia fallo (storm):", e?.message); }
       return Response.json({ ok: true, storm: true });
     }
-    result = await generateReply(ctx, texto);
+    // Guardamos el mensaje entrante ANTES de generar la respuesta para tener
+    // el contact_id a mano: así, si el mensaje trae "agendame X mañana a las
+    // Y", el asistente puede crear el turno real (Agenda v2) en vez de solo
+    // prometer que va a agendar.
+    let conversation_id = null, contact_id = null, message_id = null;
     try {
-      const { conversation_id } = await persistInbound(sb, { tenant_id: ctx.tenant.id, phone: from, canal: "whatsapp", texto, intent: result.intent });
-      await persistOutbound(sb, { tenant_id: ctx.tenant.id, conversation_id, texto: result.reply, handoff: result.handoff });
-    } catch (e) { console.error("[wh] persistencia fallo:", e?.message); }
+      const persisted = await persistInbound(sb, { tenant_id: ctx.tenant.id, phone: from, canal: "whatsapp", texto, intent: null });
+      conversation_id = persisted.conversation_id; contact_id = persisted.contact_id; message_id = persisted.message_id;
+    } catch (e) { console.error("[wh] persistencia inbound fallo:", e?.message); }
+    result = await generateReply(ctx, texto, { sb, contactId: contact_id });
+    try {
+      await updateInboundIntent(sb, { message_id, intent: result.intent });
+      if (conversation_id) await persistOutbound(sb, { tenant_id: ctx.tenant.id, conversation_id, texto: result.reply, handoff: result.handoff });
+    } catch (e) { console.error("[wh] persistencia outbound fallo:", e?.message); }
   } else {
     const intent = classifyIntent(texto);
     result = { intent, reply: ruleBasedReply(intent, texto, { brand: {}, services: [] }) };

@@ -1,12 +1,39 @@
 # 📋 Tareas Pendientes — BellaOS MVP
 
-## 🚀 Fase 1: Deploy & Testing (EN PROGRESO)
+## ⚠️ Nota (22/07/2026): este documento estaba desactualizado
+
+Varias secciones de abajo (Fase 1, "MercadoPago pendiente", etc.) quedaron escritas
+en una etapa anterior y ya NO reflejan el código real. Auditoría hecha hoy leyendo
+el código y la base directamente — esto es lo que hay REALMENTE en producción:
+
+- **WhatsApp: en vivo y funcionando.** Número real +54 362 15-484-0504, token
+  permanente, firma HMAC validada, deploy en Vercel (`bellaos-mvp-1`). No está pendiente.
+- **Facturación de la plataforma (a las estéticas): construida completa.** Prueba de
+  15 días con tarjeta (MercadoPago Secure Fields), suscripción mensual automática
+  (preapproval), cron que bloquea al vencer, panel admin cross-negocio, cuentas
+  "cortesía". Falta solo cargar credenciales reales de MercadoPago (ver abajo).
+- **Cobro de señas de turnos (MercadoPago Checkout Pro): construido completo**
+  (`/api/payments`, botón en `/agenda`, webhook que reconsulta el pago antes de
+  acreditar). Mismo tema de credenciales reales pendiente.
+- **Onboarding self-service de WhatsApp (Embedded Signup): código listo**
+  (`metaGraph.js`, `/api/whatsapp/connect`), pero bloqueado por un trámite de Meta
+  (Tech Provider + `configuration_id`) que no se puede acelerar desde el código.
+- **Login/Auth + aislamiento por negocio (RLS): construido.**
+- **Hoy además se agregó:** Agenda v2 (el asistente agenda turnos solo si el mensaje
+  trae servicio+fecha+hora, ej. "quiero un corte mañana a las 15hs" — antes solo
+  prometía "voy a ver disponibilidad"), CRM-Embudo visual con tarjetas arrastrables
+  (`/crm`), generador de contenido con IA para IG/Facebook (`/contenido`).
+
+Las secciones de abajo se dejan como quedaron (valor histórico), pero para el
+estado real siempre priorizar esta nota y `HANDOFF_CLAUDE_CODE.md`.
+
+## 🚀 Fase 1: Deploy & Testing (COMPLETA)
 - [x] Código backend completo
 - [x] Supabase conectado
 - [x] Webhook WhatsApp implementado
-- [ ] Deploy en Vercel (drag & drop)
-- [ ] Testear URLs públicas
-- [ ] Generar token permanente WhatsApp
+- [x] Deploy en Vercel — `bellaos-mvp-1`, dominio propio conectado
+- [x] Testear URLs públicas
+- [x] Generar token permanente WhatsApp
 
 ---
 
@@ -19,14 +46,18 @@ Comparación entre `BellaOS_Demo.html` (la maqueta con datos falsos del principi
 - [x] Página **Simulador ROI** construida (`/simulador-roi`, agregada al menú): calculadora en vivo de plata recuperable, para usar en reuniones de venta. Antes no existía.
 - [x] Auditoría de consistencia visual: se revisó el código de Inicio, Conversaciones, Agenda, Informes, Entrenador, Contactos, Admin, Signup, Términos/Privacidad. El sistema de diseño premium (sidebar violeta, `.card`, `.kpi`, `.btn`, etc. en `globals.css`) ya está aplicado de forma consistente en casi toda la app — el ítem "unificar diseño" del roadmap está más avanzado de lo que el checklist reflejaba.
 
-Todavía sin construir (existían como pantallas de fantasía en el demo, no como código):
+Actualizado 22/07/2026 — construido en esta sesión:
 
-- [ ] **CRM-Embudo visual** dedicado (vista tipo Kanban con tarjetas de clienta arrastrables por etapa). Hoy el embudo existe como datos y barras en `/informes`, pero no como pantalla propia interactiva.
-- [ ] **Anuncios** (integración con Meta Ads: Pixel, CAPI, retargeting, medición de ROI por campaña, creativos generados por IA). No hay página ni lógica — coincide con Fase 7 más abajo.
-- [ ] **Contenido** (IA que genera y publica posts/reels solos, con calendario de contenido). No existe.
-- [ ] **Reputación / reseñas de Google** automáticas en Informes (el demo mostraba "4,9★, +18 reseñas este mes"). No implementado — depende de Fase 6 (Fidelización v2).
-- [ ] Adaptadores de Instagram y Facebook para que `Conversaciones` reciba mensajes reales de esos canales (Fase 3 más abajo) — hoy el componente ya soporta mostrar esos canales, falta el webhook/adapter que meta los datos.
-- [ ] Agenda v2: que la IA agende sola parseando fecha/servicio del chat y cobre seña (Fase 2/3) — hoy `/agenda` es un formulario manual.
+- [x] **CRM-Embudo visual** (`/crm`): columnas por etapa con tarjetas arrastrables (drag & drop nativo), mueve `contacts.stage` en vivo.
+- [x] **Contenido IA** (`/contenido`): genera copy para IG/Facebook con OpenRouter (promo, tip, testimonio, novedad, fecha especial). Publicación automática todavía no — depende de permiso de Meta (Content Publishing API), por ahora se copia y pega a mano.
+- [x] **Agenda v2**: el asistente agenda solo cuando el mensaje trae servicio + fecha + hora reconocibles ("agendame un corte mañana a las 15hs") — crea el turno real, chequea que no choque con otro turno, y confirma por el mismo chat. Si falta info, sigue pidiendo por LLM/reglas como antes. `/agenda` sigue existiendo como formulario manual para cargar turnos a mano.
+
+Todavía sin construir (genuinamente pendiente, no por falta de tiempo sino por dependencias externas o por ser fase posterior):
+
+- [ ] **Anuncios** (integración con Meta Ads: Pixel, CAPI, retargeting, medición de ROI por campaña). No hay página ni lógica — coincide con Fase 7. Fase posterior a propósito (así lo decidió Claude Code en la sesión 3, no es un olvido).
+- [ ] **Reputación / reseñas de Google** automáticas en Informes (el demo mostraba "4,9★, +18 reseñas este mes"). No implementado — depende de Fase 6 (Fidelización v2) y de conectar Google Business Profile API (OAuth propio, lo tiene que autorizar Gerardo).
+- [ ] Adaptadores de Instagram y Facebook para que `Conversaciones` reciba mensajes reales de esos canales — **bloqueado por Meta**: requiere que se apruebe el mismo trámite de Embedded Signup (Tech Provider + permisos `pages_messaging`/`instagram_manage_messages`), no es una tarea de código pendiente sino una aprobación externa con tiempos que no controlamos.
+- [ ] Cobrar seña automáticamente al agendar por chat (hoy Agenda v2 crea el turno pero el cobro de seña sigue siendo manual desde `/agenda`, botón "Cobrar seña").
 
 ---
 
@@ -67,14 +98,15 @@ Todavía sin construir (existían como pantallas de fantasía en el demo, no com
 
 ---
 
-## 💳 Fase 4: Pagos & Suscripción (PENDIENTE)
+## 💳 Fase 4: Pagos & Suscripción (CÓDIGO LISTO — falta credenciales reales)
 
 ### MercadoPago
-- [ ] Conectar API de MP
-- [ ] Crear órdenes de pago en `/api/appointments` (seña)
-- [ ] Crear órdenes en `/api/campaigns` (reactivación paga)
-- [ ] Webhooks de MP (confirmación de pago)
-- [ ] Notificaciones al cliente (WhatsApp: "Pago confirmado")
+- [x] Conectar API de MP (`src/lib/mercadopago.js`, `src/lib/mpSubscription.js`)
+- [x] Crear órdenes de pago en `/api/payments` (seña de turno) y suscripción (`/api/billing/confirm`)
+- [x] Webhooks de MP (`/api/webhook/mercadopago`, confirma re-consultando el pago, nunca confía en el payload)
+- [ ] Cargar credenciales reales en Vercel: `NEXT_PUBLIC_MP_PUBLIC_KEY` y `MP_ACCESS_TOKEN` (los tiene que generar Gerardo desde su cuenta de MercadoPago — por seguridad esto no lo puede hacer un asistente de IA, tiene que cargarlo el dueño de la cuenta).
+- [ ] Probar el alta con tarjeta de prueba de MercadoPago una vez cargadas las credenciales.
+- [ ] Notificaciones al cliente por WhatsApp cuando se confirma un pago (hoy solo se marca `sena_pagada=true` en la base, no se avisa por chat).
 
 ### Planes & Billing
 - [ ] Crear tabla `subscription_plans` (Basic, Pro, Enterprise)

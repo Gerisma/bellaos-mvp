@@ -23,8 +23,16 @@ export async function persistInbound(sb, { tenant_id, phone, canal, texto, inten
     const { data } = await sb.from("conversations").insert({ tenant_id, contact_id: contact.id, canal, estado: "abierta" }).select("id").single();
     conv = data;
   }
-  await sb.from("messages").insert({ tenant_id, conversation_id: conv.id, rol: "in", texto, intent });
-  return { contact_id: contact.id, conversation_id: conv.id };
+  const { data: inserted } = await sb.from("messages").insert({ tenant_id, conversation_id: conv.id, rol: "in", texto, intent }).select("id").single();
+  return { contact_id: contact.id, conversation_id: conv.id, message_id: inserted?.id };
+}
+
+// Completa el intent de un mensaje entrante ya guardado (el webhook persiste
+// el mensaje antes de clasificarlo, para tener el contact_id disponible al
+// generar la respuesta — ver Agenda v2 en responder.js).
+export async function updateInboundIntent(sb, { message_id, intent }) {
+  if (!message_id || !intent) return;
+  await sb.from("messages").update({ intent }).eq("id", message_id);
 }
 export async function persistOutbound(sb, { tenant_id, conversation_id, texto, handoff }) {
   await sb.from("messages").insert({ tenant_id, conversation_id, rol: handoff ? "out_humano" : "out_ia", texto });
