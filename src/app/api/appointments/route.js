@@ -4,6 +4,7 @@ import { errorResponse } from "@/lib/apiError";
 import { isUuid, isValidDate } from "@/lib/validate";
 import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { TEMPLATES } from "@/lib/templates";
+import { crearEventoEspejo } from "@/lib/googleCalendar";
 
 export async function GET() {
   try {
@@ -32,17 +33,17 @@ export async function POST(req) {
       service_id: b.service_id || null, inicio: b.inicio, estado: "agendado",
     }).select().single();
     if (error) throw error;
+    const [{ data: contact }, { data: tenant }, { data: service }] = await Promise.all([
+      b.contact_id ? sb.from("contacts").select("nombre,telefono").eq("id", b.contact_id).single() : Promise.resolve({ data: null }),
+      sb.from("tenants").select("name,whatsapp_phone_id,whatsapp_token,google_calendar_connected,google_refresh_token,google_calendar_id").eq("id", tenant_id).single(),
+      b.service_id ? sb.from("services").select("nombre,duracion_min").eq("id", b.service_id).single() : Promise.resolve({ data: null }),
+    ]);
     if (b.contact_id) {
       await sb.from("contacts").update({ stage: "turno_agendado" }).eq("id", b.contact_id);
       // Confirmación de turno: mensaje iniciado por el negocio (lo agenda el
       // staff desde /agenda, no necesariamente respondiendo un mensaje
       // reciente del cliente), así que tiene que ser plantilla aprobada.
       try {
-        const [{ data: contact }, { data: tenant }, { data: service }] = await Promise.all([
-          sb.from("contacts").select("nombre,telefono").eq("id", b.contact_id).single(),
-          sb.from("tenants").select("whatsapp_phone_id,whatsapp_token").eq("id", tenant_id).single(),
-          b.service_id ? sb.from("services").select("nombre").eq("id", b.service_id).single() : Promise.resolve({ data: null }),
-        ]);
         if (contact?.telefono) {
           await sendWhatsAppTemplate(contact.telefono, {
             phoneId: tenant?.whatsapp_phone_id,
@@ -52,6 +53,17 @@ export async function POST(req) {
           });
         }
       } catch (e) { /* no frenar la creación del turno si falla el envío */ }
+    }
+    if (tenant?.google_calendar_connected && tenant?.google_refresh_token) {
+      try {
+        const googleEventId = await crearEventoEspejo({
+          refreshToken: tenant.google_refresh_token, calendarId: tenant.google_calendar_id,
+          titulo: `${service?.nombre || "Turno"} · ${contact?.nombre || "Clienta"}`,
+          descripcion: `Agendado desde BellaOS (${tenant.name || ""}).`,
+          inicioIso: b.inicio, duracionMin: service?.duracion_min,
+        });
+        if (googleEventId) await sb.from("appointments").update({ google_event_id: googleEventId }).eq("id", data.id);
+      } catch (e) { /* el espejo de Google nunca frena el turno real */ }
     }
     return Response.json({ ok: true, appointment: data });
   } catch (e) {

@@ -4,6 +4,7 @@ import { ruleBasedReply, classifyIntent } from "@/lib/brain";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import { supabaseAdmin } from "@/lib/supabase";
 import { persistInbound, persistOutbound, isMessageStorm, updateInboundIntent } from "@/lib/conversations";
+import { notificarDuena } from "@/lib/notify";
 
 function isValidVerifyToken(token) {
   const expected = process.env.WHATSAPP_VERIFY_TOKEN;
@@ -82,6 +83,7 @@ export async function POST(req) {
     try {
       await updateInboundIntent(sb, { message_id, intent: result.intent });
       if (conversation_id) await persistOutbound(sb, { tenant_id: ctx.tenant.id, conversation_id, texto: result.reply, handoff: result.handoff });
+      if (result.handoff) await notificarDuena(ctx.tenant, `Una clienta necesita atención humana: "${texto.slice(0, 120)}"`);
     } catch (e) { console.error("[wh] persistencia outbound fallo:", e?.message); }
   } else {
     const intent = classifyIntent(texto);

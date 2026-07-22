@@ -3,6 +3,8 @@ import { composeSystemPrompt, classifyIntent, ruleBasedReply } from "./brain";
 import { askLLM } from "./llm";
 import { searchFAQs } from "./knowledge";
 import { tryParseBooking, fmtFechaHora } from "./booking";
+import { notificarDuena } from "./notify";
+import { crearEventoEspejo } from "./googleCalendar";
 
 export async function loadTenantContext({ tenantId, phoneId }) {
   const sb = supabaseAdmin();
@@ -46,6 +48,19 @@ async function tryAutoAgendar(ctx, text, { sb, contactId }) {
     .select("id").single();
   if (error || !appt) return null; // si falla el insert, seguimos con la respuesta normal en vez de mentir que se agendó
   await db.from("contacts").update({ stage: "turno_agendado" }).eq("id", contactId);
+  await notificarDuena(ctx.tenant, `Turno nuevo agendado solo por el asistente: ${parsed.service.nombre}, ${fmtFechaHora(parsed.isoInicio)}.`);
+  if (ctx.tenant.google_calendar_connected && ctx.tenant.google_refresh_token) {
+    try {
+      const { data: contact } = await db.from("contacts").select("nombre").eq("id", contactId).single();
+      const googleEventId = await crearEventoEspejo({
+        refreshToken: ctx.tenant.google_refresh_token, calendarId: ctx.tenant.google_calendar_id,
+        titulo: `${parsed.service.nombre} · ${contact?.nombre || "Clienta"}`,
+        descripcion: `Agendado solo por el asistente de BellaOS (${ctx.tenant.name || ""}).`,
+        inicioIso: parsed.isoInicio, duracionMin: duracionMin,
+      });
+      if (googleEventId) await db.from("appointments").update({ google_event_id: googleEventId }).eq("id", appt.id);
+    } catch (e) { /* el espejo de Google nunca frena el turno real */ }
+  }
 
   return {
     intent: "agendar_turno",

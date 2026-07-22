@@ -9,13 +9,16 @@ const items = [
   { h: "/panel", ic: "👥", t: "Contactos" },
   { h: "/crm", ic: "🗂️", t: "CRM · Embudo" },
   { h: "/agenda", ic: "📅", t: "Agenda" },
+  { h: "/productos", ic: "🛍️", t: "Productos" },
   { h: "/reactivador", ic: "💎", t: "Reactivador" },
   { h: "/contenido", ic: "✨", t: "Contenido IA" },
   { h: "/informes", ic: "📈", t: "Informes" },
   { h: "/simulador-roi", ic: "🧮", t: "Simulador ROI" },
+  { h: "/conexiones", ic: "🔌", t: "Conexiones" },
   { h: "/ajustes", ic: "⚙️", t: "Ajustes" },
 ];
 const PUBLIC_PAGES = ["/", "/login", "/signup", "/terminos", "/privacidad"];
+const esPublica = (p) => PUBLIC_PAGES.includes(p) || p.startsWith("/tienda/");
 
 export default function Shell({ children }) {
   const p = usePathname() || "/";
@@ -25,7 +28,7 @@ export default function Shell({ children }) {
   const [logoUrl, setLogoUrl] = useState(null);
 
   useEffect(() => {
-    if (PUBLIC_PAGES.includes(p)) return;
+    if (esPublica(p)) return;
     const sb = supabaseBrowser();
     sb.auth.getUser().then(({ data }) => setEmail(data?.user?.email || null));
     // RLS ya restringe estas lecturas a la propia fila (perfil propio / tenant
@@ -39,7 +42,7 @@ export default function Shell({ children }) {
     window.location.href = "/login";
   }
 
-  if (PUBLIC_PAGES.includes(p)) return children;
+  if (esPublica(p)) return children;
 
   const navItems = isAdmin ? [...items, { h: "/admin", ic: "🛠️", t: "Admin" }] : items;
 

@@ -72,7 +72,28 @@ async function handle(req) {
   const payment = await resolvePayment(sb, paymentId);
   if (!payment || payment.status !== "approved") return Response.json({ ok: true });
 
-  const [tenantId, appointmentId] = String(payment.external_reference || "").split(":");
+  const ref = String(payment.external_reference || "");
+
+  // Pedido de la tienda: external_reference = "order:<tenant_id>:<order_id>"
+  if (ref.startsWith("order:")) {
+    const [, tenantId, orderId] = ref.split(":");
+    if (!tenantId || !orderId) return Response.json({ ok: true });
+    const { data: order } = await sb.from("orders").select("id,estado,mp_payment_id").eq("id", orderId).eq("tenant_id", tenantId).single();
+    if (!order || order.mp_payment_id === String(payment.id)) return Response.json({ ok: true }); // ya procesado
+    await sb.from("orders").update({ estado: "pagado", mp_payment_id: String(payment.id) }).eq("id", orderId);
+    // Descuenta stock (best-effort: si algo falla acá, el pedido ya quedó
+    // marcado pagado — el stock se puede ajustar a mano si hace falta).
+    const { data: items } = await sb.from("order_items").select("product_id,cantidad").eq("order_id", orderId);
+    for (const it of items || []) {
+      if (!it.product_id) continue;
+      const { data: prod } = await sb.from("products").select("stock").eq("id", it.product_id).single();
+      if (prod) await sb.from("products").update({ stock: Math.max(0, prod.stock - it.cantidad) }).eq("id", it.product_id);
+    }
+    return Response.json({ ok: true });
+  }
+
+  // Seña de turno: external_reference = "<tenant_id>:<appointment_id>"
+  const [tenantId, appointmentId] = ref.split(":");
   if (!tenantId || !appointmentId) return Response.json({ ok: true });
 
   const { data: appt } = await sb.from("appointments").select("id,mp_payment_id").eq("id", appointmentId).eq("tenant_id", tenantId).single();

@@ -27,6 +27,55 @@ el código y la base directamente — esto es lo que hay REALMENTE en producció
 Las secciones de abajo se dejan como quedaron (valor histórico), pero para el
 estado real siempre priorizar esta nota y `HANDOFF_CLAUDE_CODE.md`.
 
+## 🆕 Segunda tanda (22/07/2026, más tarde): Conexiones + Tienda + Catálogo
+
+A pedido de Gerardo: sección de Conexiones, tienda de productos tangibles con
+carrito y pago, y catálogo de servicios con categorías reales.
+
+- [x] **Catálogo real cargado**: 44 servicios de Bella Estética (categorías, sub-tratamientos,
+  precios, duración, tiempo de limpieza/preparación, tiempo de reserva) — tabla `services`
+  ampliada con `categoria`, `subcategoria`, `tiempo_limpieza_min`, `tiempo_reserva_dias`.
+  **Precios son de ejemplo, hay que confirmarlos antes de salir al mercado** (palabra de Gerardo).
+- [x] **Página `/conexiones`** (nueva en el menú): hub único con WhatsApp (ya existía),
+  Facebook/Instagram (nuevo), Google Calendar (nuevo) y a qué WhatsApp/email le llegan
+  los avisos internos.
+- [x] **Notificaciones a la dueña por WhatsApp**: cuando el asistente agenda un turno solo
+  (Agenda v2) o deriva una conversación a un humano, se le avisa por WhatsApp a
+  `tenants.notif_whatsapp_telefono` (configurable en `/conexiones`). Usa una plantilla
+  nueva (`aviso_dueno`) que **todavía hay que crear y mandar a aprobar en Meta Business
+  Manager** — sin esa plantilla aprobada, el envío va a fallar silenciosamente (queda
+  logueado, no rompe nada).
+- [x] **Facebook/Instagram: botón de conexión real** (`ConnectFacebook.js`, `/api/facebook/connect`):
+  login con Facebook, guarda la Página y la cuenta de Instagram Business vinculada.
+  Funciona hoy mismo para el administrador de la app de Meta (modo desarrollo); para
+  que cualquier negocio externo lo use hace falta la misma aprobación de Meta que
+  Embedded Signup de WhatsApp (`pages_messaging`, `instagram_manage_messages`).
+  **Todavía no alimenta Conversaciones** (falta el adapter que reciba esos mensajes).
+- [x] **Google Calendar: OAuth + espejo de turnos** (`src/lib/googleCalendar.js`,
+  `/api/google/connect`, `/api/google/callback`): al conectar, cada turno nuevo
+  (manual o agendado solo por la IA) crea un evento en el Google Calendar de la
+  dueña. Es de solo lectura para ella — BellaOS sigue siendo la fuente de verdad.
+  **Falta cargar `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`** de un proyecto de
+  Google Cloud (Gerardo tiene que crearlo, habilitar la Calendar API y configurar
+  la pantalla de consentimiento OAuth) — sin esas variables el botón "Conectar"
+  devuelve un aviso claro en vez de fallar.
+- [x] **Tienda de productos tangibles completa**: gestión (`/productos`, con subida de
+  foto) + tienda pública sin login (`/tienda/<slug>`) con carrito y checkout real por
+  MercadoPago (`/api/tienda/[slug]`) + webhook extendido para marcar el pedido pagado
+  y descontar stock. Tablas `orders`/`order_items` nuevas; `products` ya existía de
+  antes (de fidelización) y se le agregó `descripcion`/`imagen_url`.
+  **Depende de las mismas credenciales reales de MercadoPago** que la seña de turnos.
+
+### Variables de entorno nuevas a cargar en Vercel (las tiene que poner Gerardo)
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google Cloud Console, Calendar API habilitada.
+- (Ya pendientes de antes) `MP_ACCESS_TOKEN` / `NEXT_PUBLIC_MP_PUBLIC_KEY` reales de MercadoPago.
+- (Ya pendientes de antes) `NEXT_PUBLIC_META_APP_ID` / `NEXT_PUBLIC_META_CONFIG_ID` — también
+  destraban el botón de Facebook/Instagram en `/conexiones`, no solo WhatsApp.
+
+### Pendiente de gestión en Meta (no es código)
+- [ ] Crear y mandar a aprobar la plantilla de WhatsApp `aviso_dueno` (para las notificaciones internas).
+- [ ] Trámite de permisos `pages_messaging`/`instagram_manage_messages` (mismo trámite que Embedded Signup) para que Facebook/Instagram funcione con negocios externos, no solo en modo desarrollo.
+
 ## 🚀 Fase 1: Deploy & Testing (COMPLETA)
 - [x] Código backend completo
 - [x] Supabase conectado
