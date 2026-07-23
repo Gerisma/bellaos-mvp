@@ -36,8 +36,17 @@ function rateLimited(pathname, ip) {
 // visitante encuentren la marca de la empresa en el dominio.
 const PUBLIC_PATHS = ["/", "/login", "/signup", "/privacidad", "/terminos"];
 
+// Subdominio propio del producto BellaOS (bellaos.conectaiapro.org): mismo
+// deploy que www.conectaiapro.org (la portada de la empresa), pero acá "/"
+// tiene que ser la puerta de entrada al panel, no la landing comercial. El
+// día que ConectaIA Pro lance otro producto (inmobiliarias, gimnasios, etc.)
+// va en su propio subdominio/proyecto aparte, no anidado en rutas de este.
+function esSubdominioBellaOS(hostname) {
+  return (hostname || "").startsWith("bellaos.");
+}
+
 export async function middleware(req) {
-  const { pathname } = req.nextUrl;
+  const { pathname, hostname } = req.nextUrl;
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
 
   if (rateLimited(pathname, ip)) {
@@ -45,6 +54,13 @@ export async function middleware(req) {
   }
 
   if (pathname === "/api/webhook/whatsapp" || pathname === "/api/webhook/mercadopago" || pathname === "/api/cron/recordatorios" || pathname === "/api/cron/billing") {
+    return NextResponse.next();
+  }
+
+  // Tienda pública: clientas sin login viendo el catálogo o comprando. Todas
+  // estas rutas resuelven el tenant por el slug de la URL y usan
+  // supabaseAdmin() del lado del servidor (nunca RLS con sesión anónima).
+  if (pathname.startsWith("/tienda/") || pathname.startsWith("/api/tienda/")) {
     return NextResponse.next();
   }
 
@@ -70,6 +86,11 @@ export async function middleware(req) {
   const isPublic = PUBLIC_PATHS.includes(pathname);
 
   if (!user) {
+    // En el subdominio del producto, "/" es la puerta de entrada al login,
+    // no la landing de la empresa (esa vive en www.conectaiapro.org).
+    if (pathname === "/" && esSubdominioBellaOS(hostname)) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
     if (isPublic) return supabaseResponse;
     if (pathname.startsWith("/api")) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });

@@ -76,6 +76,26 @@ carrito y pago, y catálogo de servicios con categorías reales.
 - [ ] Crear y mandar a aprobar la plantilla de WhatsApp `aviso_dueno` (para las notificaciones internas).
 - [ ] Trámite de permisos `pages_messaging`/`instagram_manage_messages` (mismo trámite que Embedded Signup) para que Facebook/Instagram funcione con negocios externos, no solo en modo desarrollo.
 
+## 🌐 Subdominio propio de BellaOS (22/07/2026)
+
+A pedido de Gerardo: separar `www.conectaiapro.org` (portada de la empresa) de un
+subdominio propio para el producto BellaOS, en vez de anidar rutas por producto/cliente.
+
+- [x] Agregado `bellaos.conectaiapro.org` como dominio del proyecto en Vercel (mismo deploy).
+- [x] `src/middleware.js`: en ese subdominio, "/" sin sesión manda a `/login` (el panel),
+  no a la landing comercial — la landing sigue viviendo solo en `www.conectaiapro.org`.
+- [ ] **Falta un solo paso, lo tiene que hacer Gerardo**: cargar este registro DNS en
+  Hostinger (no pude entrar yo, pide su contraseña):
+  - Tipo: `CNAME`
+  - Nombre: `bellaos`
+  - Valor: `a88263012922a2a8.vercel-dns-017.com.`
+  - Vercel lo va a marcar como "Valid Configuration" solo, apenas propague (minutos a
+    unas horas). Después de eso, `bellaos.conectaiapro.org` funciona como la puerta de
+    entrada al panel de BellaOS.
+- Para el próximo producto de ConectaIA Pro (inmobiliarias, gimnasios, etc.): mismo
+  patrón, un subdominio nuevo apuntando a un proyecto de Vercel aparte (no anidarlo
+  como rutas de este proyecto — son bases de datos y lógica de negocio distintas).
+
 ## 🚀 Fase 1: Deploy & Testing (COMPLETA)
 - [x] Código backend completo
 - [x] Supabase conectado
